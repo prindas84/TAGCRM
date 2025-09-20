@@ -1,0 +1,908 @@
+@page "/members/membership/{memberId:int}"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@using TAGCRM.Models
+@using TAGCRM.Services
+
+@attribute [Authorize]
+@inject MemberService MemberService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Member Membership - Trade Alliance Group</PageTitle>
+
+<div class="container-fluid page-container-section mb-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="page-title">Member Record</h1>
+            <div class="mobile-button-container">
+                <button type="button" class="btn btn-primary create-record-button mobile-button" @onclick="SaveAsync">
+                    Update Member
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button type="button" class="btn btn-primary create-record-button desktop-button" @onclick="SaveAsync">
+                Update Member
+            </button>
+        </div>
+    </div>
+
+    @if (showSuccessAlert)
+    {
+        <div class="alert alert-success mt-3" role="alert">
+            @successMessage
+        </div>
+    }
+
+    @if (MemberId > 0)
+    {
+        <MemberTabs MemberId="MemberId" ActiveTab="membership" />
+    }
+
+    <div class="row">
+        <!-- Membership Section -->
+        <div class="col-md-12">
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#membership" aria-expanded="false">
+                            Membership
+                        </button>
+                    </h2>
+                    <div id="membership" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            @if (member is not null)
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Active</label>
+                                            <div class="form-check form-switch" style="margin-bottom: 30px !important;">
+                                                <input class="form-check-input record-toggles" type="checkbox" 
+                                                       id="memberActiveToggle" @bind="member.Active" />
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Category</label>
+                                            <select class="form-select" @bind="member.Category">
+                                                <option value="0">Select Category</option>
+                                                @foreach (var category in categories)
+                                                {
+                                                    <option value="@category.Id">@category.Name</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Join Date</label>
+                                            <input type="date" class="form-control" @bind="membershipStartDate" @bind:format="yyyy-MM-dd" />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Membership Payment (Including GST)</label>
+                                            <input type="number" step="0.01" class="form-control" 
+                                                   @bind="member.MembershipValue" placeholder="Membership Payment Amount" />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Payment Method</label>
+                                            <div class="mt-2">
+                                                @foreach (var method in paymentMethods)
+                                                {
+                                                    <div class="form-check form-check-inline">
+                                                        <input class="form-check-input" type="radio" 
+                                                               name="paymentMethod" id="payment_@method.Id"
+                                                               value="@method.Id" 
+                                                               checked="@(member.PaymentMethod == method.Id)"
+                                                               @onchange="() => member.PaymentMethod = method.Id" />
+                                                        <label class="form-check-label" for="payment_@method.Id">
+                                                            @method.Name
+                                                        </label>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Referred By</label>
+                                            <div class="input-group">
+                                                <input class="form-control" placeholder="Search contact…" @bind="ReferredByQuery"
+                                                    @bind:event="oninput" @onfocus="() => ShowReferredByList(true)"
+                                                    @onblur="HideReferredByListDelayed" />
+                                                @if (member.ReferredBy > 0)
+                                                {
+                                                    <a class="input-group-text link-icon" href="/contacts/@member.ReferredBy"
+                                                        target="_blank" title="View Contact">
+                                                        <i class="bi bi-person-fill"></i>
+                                                    </a>
+                                                }
+                                                @if (showReferredByList && referredByResults.Any())
+                                                {
+                                                    <ul class="list-group position-absolute w-100" style="z-index: 1000; top: 100%;">
+                                                        @foreach (var c in referredByResults)
+                                                        {
+                                                            <li class="list-group-item list-group-item-action"
+                                                                @onclick="() => SelectReferredBy(c)">
+                                                                @GetContactDisplayName(c)
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </div>
+                                            <div class="form-text">
+                                                @if (!string.IsNullOrWhiteSpace(ReferredByQuery) && !referredByResults.Any())
+                                                {
+                                                    <span>No matches</span>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Class</label>
+                                            <select class="form-select" @bind="member.Class">
+                                                <option value="0">Select Class</option>
+                                                @foreach (var memberClass in classes)
+                                                {
+                                                    <option value="@memberClass.Id">@memberClass.Name</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Expiry Date</label>
+                                            <input type="date" class="form-control" @bind="membershipEndDate" @bind:format="yyyy-MM-dd" />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted">Loading…</div>
+                            }
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                    Update Member
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commission Details Section -->
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#commissionDetails" aria-expanded="false">
+                            Commission Details
+                        </button>
+                    </h2>
+                    <div id="commissionDetails" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <!-- Timing Section -->
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Timing</h6>
+                                    <div class="table-container">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 60%;">Class</th>
+                                                    <th style="width: 40%;">Timing</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>HIA</td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm">
+                                                            <option value="">Select</option>
+                                                            <option value="Option 1">Option 1</option>
+                                                            <option value="Option 2">Option 2</option>
+                                                            <option value="Option 3">Option 3</option>
+                                                            <option value="Option 4">Option 4</option>
+                                                            <option value="Option 5">Option 5</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Supplier</td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm">
+                                                            <option value="">Select</option>
+                                                            <option value="Option 1">Option 1</option>
+                                                            <option value="Option 2">Option 2</option>
+                                                            <option value="Option 3">Option 3</option>
+                                                            <option value="Option 4">Option 4</option>
+                                                            <option value="Option 5">Option 5</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>FrameBuild</td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm">
+                                                            <option value="">Select</option>
+                                                            <option value="Option 1">Option 1</option>
+                                                            <option value="Option 2">Option 2</option>
+                                                            <option value="Option 3">Option 3</option>
+                                                            <option value="Option 4">Option 4</option>
+                                                            <option value="Option 5">Option 5</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Landscape Queensland Member</td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm">
+                                                            <option value="">Select</option>
+                                                            <option value="Option 1">Option 1</option>
+                                                            <option value="Option 2">Option 2</option>
+                                                            <option value="Option 3">Option 3</option>
+                                                            <option value="Option 4">Option 4</option>
+                                                            <option value="Option 5">Option 5</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Amount Section -->
+                                <div class="col-md-6">
+                                    <h6 class="mb-3">Amount</h6>
+                                    <div class="table-container">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 55%;">Category</th>
+                                                    <th style="width: 45%;">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Builder</td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" placeholder="$" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Contractor</td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" placeholder="$" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Landscaper</td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" placeholder="$" />
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Other</td>
+                                                    <td>
+                                                        <input type="text" class="form-control form-control-sm" placeholder="$" />
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                    Update Member
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback Section -->
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#feedback" aria-expanded="false">
+                            Feedback
+                        </button>
+                    </h2>
+                    <div id="feedback" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <!-- Feedback Table -->
+                            <div class="table-container">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>From</th>
+                                            <th>Testimonial</th>
+                                            <th>Comments</th>
+                                            <th>Created By</th>
+                                            <th>Published</th>
+                                            <th class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Matthew Prendergast</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>Brett Crowther</td>
+                                            <td class="text-center">
+                                                <i class="bi bi-circle-fill text-success"></i>
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1 me-1"
+                                                    style="width: 28px; height: 28px;" title="Edit feedback"
+                                                    @onclick="ShowEditFeedbackModal">
+                                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                    style="width: 28px; height: 28px;" title="Delete feedback"
+                                                    @onclick="DeleteFeedbackAsync">
+                                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Matthew Prendergast</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>Brett Crowther</td>
+                                            <td class="text-center">
+                                                <i class="bi bi-circle-fill text-success"></i>
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1 me-1"
+                                                    style="width: 28px; height: 28px;" title="Edit feedback"
+                                                    @onclick="ShowEditFeedbackModal">
+                                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                    style="width: 28px; height: 28px;" title="Delete feedback"
+                                                    @onclick="DeleteFeedbackAsync">
+                                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Matthew Prendergast</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>Brett Crowther</td>
+                                            <td class="text-center">
+                                                <i class="bi bi-circle-fill text-success"></i>
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1 me-1"
+                                                    style="width: 28px; height: 28px;" title="Edit feedback"
+                                                    @onclick="ShowEditFeedbackModal">
+                                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                    style="width: 28px; height: 28px;" title="Delete feedback"
+                                                    @onclick="DeleteFeedbackAsync">
+                                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Matthew Prendergast</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>Brett Crowther</td>
+                                            <td class="text-center">
+                                                <i class="bi bi-circle-fill text-success"></i>
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1 me-1"
+                                                    style="width: 28px; height: 28px;" title="Edit feedback"
+                                                    @onclick="ShowEditFeedbackModal">
+                                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                    style="width: 28px; height: 28px;" title="Delete feedback"
+                                                    @onclick="DeleteFeedbackAsync">
+                                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                    Update Member
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Black Flags Section -->
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#blackFlags" aria-expanded="false">
+                            Black Flags
+                        </button>
+                    </h2>
+                    <div id="blackFlags" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <!-- Add Black Flag Button -->
+                            <div class="d-flex justify-content-center mb-3">
+                                <button type="button" class="btn btn-primary create-record-button record-buttons"
+                                    @onclick="ShowAddBlackFlagModal">
+                                    + Add Black Flag
+                                </button>
+                            </div>
+
+                            <!-- Suppliers Black Flagged by the Member -->
+                            <h6>Suppliers Black Flagged by the Member</h6>
+                            <div class="table-container mb-4">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Supplier</th>
+                                            <th>Type</th>
+                                            <th>Date</th>
+                                            <th>Notes</th>
+                                            <th class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Example Supplier</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1 me-1"
+                                                    style="width: 28px; height: 28px;" title="Edit black flag"
+                                                    @onclick="ShowEditBlackFlagModal">
+                                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                    style="width: 28px; height: 28px;" title="Delete black flag"
+                                                    @onclick="DeleteBlackFlagAsync">
+                                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Example Supplier</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1 me-1"
+                                                    style="width: 28px; height: 28px;" title="Edit black flag"
+                                                    @onclick="ShowEditBlackFlagModal">
+                                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                    style="width: 28px; height: 28px;" title="Delete black flag"
+                                                    @onclick="DeleteBlackFlagAsync">
+                                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Suppliers who have Black Flagged this Member -->
+                            <h6>Suppliers who have Black Flagged this Member</h6>
+                            <div class="table-container">
+                                <table class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Supplier</th>
+                                            <th>Type</th>
+                                            <th>Date</th>
+                                            <th>Notes</th>
+                                            <th class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Example Supplier</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1 me-1"
+                                                    style="width: 28px; height: 28px;" title="Edit black flag"
+                                                    @onclick="ShowEditBlackFlagModal">
+                                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                    style="width: 28px; height: 28px;" title="Delete black flag"
+                                                    @onclick="DeleteBlackFlagAsync">
+                                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Example Supplier</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1 me-1"
+                                                    style="width: 28px; height: 28px;" title="Edit black flag"
+                                                    @onclick="ShowEditBlackFlagModal">
+                                                    <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                    style="width: 28px; height: 28px;" title="Delete black flag"
+                                                    @onclick="DeleteBlackFlagAsync">
+                                                    <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                    Update Member
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Feedback Modal -->
+<div class="modal fade" id="editFeedbackModal" tabindex="-1" aria-labelledby="editFeedbackModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editFeedbackModalLabel">Edit Feedback</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label field-label">Publish</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input record-toggles" type="checkbox" id="publishFeedback" @bind="modalPublished" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Supplier Rating</label>
+                    <div class="d-flex gap-1">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            int starIndex = i;
+                            <i class="bi @(starIndex <= modalRating ? "bi-star-fill text-warning" : "bi-star text-muted")" 
+                               style="font-size: 20px; cursor: pointer;" 
+                               @onclick="() => SetRating(starIndex)"></i>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Feedback</label>
+                    <textarea class="form-control" rows="4" placeholder="Enter the feedback here..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Comments</label>
+                    <textarea class="form-control" rows="4" placeholder="Enter the comments here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn modal-confirm" @onclick="SaveFeedbackAsync" data-bs-dismiss="modal">
+                    Edit Feedback
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Black Flag Modal -->
+<div class="modal fade" id="blackFlagModal" tabindex="-1" aria-labelledby="blackFlagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="blackFlagModalLabel">@(editingBlackFlagId > 0 ? "Edit Black Flag" : "Add Black Flag")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label field-label">Supplier</label>
+                    <div class="input-group">
+                        <input class="form-control" placeholder="Supplier..." @bind="modalSupplierQuery" />
+                        <button class="input-group-text" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Type</label>
+                    <select class="form-select" @bind="modalBlackFlagType">
+                        <option value="">Select Type</option>
+                        <option value="Payment Issue">Payment Issue</option>
+                        <option value="Quality Issue">Quality Issue</option>
+                        <option value="Service Issue">Service Issue</option>
+                        <option value="Delivery Issue">Delivery Issue</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Notes</label>
+                    <textarea class="form-control" rows="4" placeholder="Enter the notes here..." @bind="modalBlackFlagNotes"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn modal-confirm" @onclick="SaveBlackFlagAsync" data-bs-dismiss="modal">
+                    @(editingBlackFlagId > 0 ? "Edit Black Flag" : "Add Black Flag")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int MemberId { get; set; }
+    private Member? member;
+
+    // Alert state
+    private bool showSuccessAlert = false;
+    private string successMessage = string.Empty;
+    private System.Threading.Timer? hideTimer;
+
+    // Feedback modal state
+    private bool modalPublished = true;
+    private int modalRating = 5;
+
+    // Black Flag modal state
+    private int editingBlackFlagId = 0;
+    private string modalSupplierQuery = string.Empty;
+    private string modalBlackFlagType = string.Empty;
+    private string modalBlackFlagNotes = string.Empty;
+
+    // Lookup lists
+    private List<Category> categories = new();
+    private List<Class> classes = new();
+    private List<PaymentMethod> paymentMethods = new();
+
+    // Date properties for binding
+    private DateTime? membershipStartDate;
+    private DateTime? membershipEndDate;
+
+    // Contact search functionality for Referred By
+    private List<Contact> allContacts = new();
+    private string referredByQuery = string.Empty;
+    private List<Contact> referredByResults = new();
+    private bool showReferredByList = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Load lookup data from JSON files via service first
+        categories = await MemberService.GetCategoriesAsync();
+        classes = await MemberService.GetClassesAsync();
+        paymentMethods = await MemberService.GetPaymentMethodsAsync();
+        allContacts = await MemberService.GetAllContactsAsync();
+
+        if (MemberId > 0)
+        {
+            member = await MemberService.GetMemberByIdAsync(MemberId);
+            
+            // Parse date strings to DateTime objects
+            if (!string.IsNullOrEmpty(member?.MembershipStart))
+            {
+                if (DateTime.TryParse(member.MembershipStart, out var startDate))
+                {
+                    membershipStartDate = startDate;
+                }
+            }
+            
+            if (!string.IsNullOrEmpty(member?.MembershipEnd))
+            {
+                if (DateTime.TryParse(member.MembershipEnd, out var endDate))
+                {
+                    membershipEndDate = endDate;
+                }
+            }
+        }
+
+        // Set referred by query to display current referred by contact name (after contacts are loaded)
+        referredByQuery = GetReferredByDisplayName();
+        FilterReferredByContacts(referredByQuery);
+    }
+
+    // Main save button handler with scroll to top functionality
+    private async Task SaveAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Member Updated";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Display success alert with auto-hide timer and page refresh
+    private async Task ShowAlertAndScrollAsync()
+    {
+        showSuccessAlert = true;
+
+        hideTimer?.Dispose();
+        hideTimer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                showSuccessAlert = false;
+                StateHasChanged();
+            });
+
+            // Refresh the page
+            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+
+        }, null, 2000, System.Threading.Timeout.Infinite);
+
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    // Show edit feedback modal
+    private async Task ShowEditFeedbackModal()
+    {
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('editFeedbackModal')).show()");
+    }
+
+    // Save feedback modal (UI simulation only)
+    private async Task SaveFeedbackAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Feedback updated successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Delete feedback (UI simulation only)
+    private async Task DeleteFeedbackAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Feedback deleted successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Set star rating
+    private void SetRating(int rating)
+    {
+        modalRating = rating;
+        StateHasChanged();
+    }
+
+    // Black Flag modal functionality
+    private async Task ShowAddBlackFlagModal()
+    {
+        editingBlackFlagId = 0;
+        modalSupplierQuery = string.Empty;
+        modalBlackFlagType = string.Empty;
+        modalBlackFlagNotes = string.Empty;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('blackFlagModal')).show()");
+    }
+
+    private async Task ShowEditBlackFlagModal()
+    {
+        editingBlackFlagId = 1; // Simulated ID
+        modalSupplierQuery = "Example Supplier";
+        modalBlackFlagType = "Payment Issue";
+        modalBlackFlagNotes = "Sample notes";
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('blackFlagModal')).show()");
+    }
+
+    private async Task SaveBlackFlagAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = editingBlackFlagId > 0 ? "Black flag updated successfully" : "Black flag added successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    private async Task DeleteBlackFlagAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Black flag deleted successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    public void Dispose()
+    {
+        hideTimer?.Dispose();
+    }
+
+    // Referred By contact search functionality
+    private void ShowReferredByList(bool show) => showReferredByList = show;
+
+    private async void HideReferredByListDelayed(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        showReferredByList = false;
+        StateHasChanged();
+    }
+
+    private void FilterReferredByContacts(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            referredByResults = allContacts.Take(8).ToList();
+        }
+        else
+        {
+            var q = query.Trim().ToLowerInvariant();
+            referredByResults = allContacts
+                .Where(c =>
+                    (!string.IsNullOrWhiteSpace(GetContactDisplayName(c)) && GetContactDisplayName(c).ToLower().Contains(q)) ||
+                    (!string.IsNullOrWhiteSpace(c.Email) && c.Email.ToLower().Contains(q)) ||
+                    (!string.IsNullOrWhiteSpace(c.Phone) && c.Phone.ToLower().Contains(q))
+                )
+                .OrderBy(c => GetContactDisplayName(c))
+                .Take(8)
+                .ToList();
+        }
+    }
+
+    private string ReferredByQuery
+    {
+        get => referredByQuery;
+        set
+        {
+            referredByQuery = value;
+            showReferredByList = true;
+            FilterReferredByContacts(referredByQuery);
+        }
+    }
+
+    private void SelectReferredBy(Contact c)
+    {
+        if (member != null)
+        {
+            member.ReferredBy = c.Id;
+            referredByQuery = GetContactDisplayName(c);
+            showReferredByList = false;
+        }
+    }
+
+    private string GetContactDisplayName(Contact c)
+    {
+        var first = (c.FirstName ?? "").Trim();
+        var last = (c.Surname ?? "").Trim();
+        return string.Join(" ", new[] { first, last }.Where(s => !string.IsNullOrEmpty(s)));
+    }
+
+    private string GetReferredByDisplayName()
+    {
+        if (member?.ReferredBy > 0)
+        {
+            var contact = allContacts.FirstOrDefault(c => c.Id == member.ReferredBy);
+            return contact != null ? GetContactDisplayName(contact) : string.Empty;
+        }
+        return string.Empty;
+    }
+}

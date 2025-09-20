@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "name": "Warning"
+  },
+  {
+    "id": 2,
+    "name": "Holidays"
+  },
+  {
+    "id": 3,
+    "name": "Payment Overdue"
+  },
+  {
+    "id": 4,
+    "name": "Insurance Claim"
+  },
+  {
+    "id": 5,
+    "name": "Compliance Issue"
+  }
+]

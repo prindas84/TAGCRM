@@ -1,0 +1,182 @@
+@page "/members/history/{memberId:int}"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Authorization
+@using TAGCRM.Models
+@using TAGCRM.Services
+@attribute [Authorize]
+@inject MemberService MemberService
+@implements IDisposable
+
+<PageTitle>Member History - Trade Alliance Group</PageTitle>
+
+<div class="container-fluid page-container-section mb-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="page-title">Member Record</h1>
+            <div class="mobile-button-container">
+                <button type="button" class="btn btn-primary create-record-button mobile-button" @onclick="ShowAlert">Update Member</button>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button type="button" class="btn btn-primary create-record-button desktop-button" @onclick="ShowAlert">Update Member</button>
+        </div>
+    </div>
+
+    @if (MemberId > 0)
+    {
+        <MemberTabs MemberId="MemberId" ActiveTab="history" />
+    }
+
+    @if (showSuccessAlert)
+    {
+        <div class="alert alert-success mt-3" role="alert">
+            Member Record Updated
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="accordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#memberHistory" aria-expanded="true">
+                            Member History
+                        </button>
+                    </h2>
+                    <div id="memberHistory" class="accordion-collapse collapse show">
+                        <div class="accordion-body">
+                            <div class="mb-3">
+                                <label class="form-label">Search</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" class="form-control" placeholder="Search">
+                                </div>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="table table-bordered table-striped">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 12%; white-space: nowrap;">Timestamp</th>
+                                            <th style="width: 10%; white-space: nowrap;">Activity</th>
+                                            <th style="width: 10%; white-space: nowrap;">Method</th>
+                                            <th style="width: 12%; white-space: nowrap;">By</th>
+                                            <th style="width: 12%; white-space: nowrap;">For</th>
+                                            <th style="width: 15%; white-space: nowrap;">Subject</th>
+                                            <th style="width: 20%; white-space: nowrap;">Notes</th>
+                                            <th style="width: 9%; white-space: nowrap;" class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-dark">7th August, 2025</td>
+                                            <td class="text-dark">Email</td>
+                                            <td class="text-dark">Outlook</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">Membership renewal</td>
+                                            <td class="text-dark">Discussed annual membership benefits</td>
+                                            <td class="text-center">
+                                                <button class="btn btn-no-focus"><i class="bi bi-pencil-fill"></i></button>
+                                                <button class="btn btn-no-focus"><i class="bi bi-trash-fill"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-dark">6th August, 2025</td>
+                                            <td class="text-dark">SMS</td>
+                                            <td class="text-dark">Mobile</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">Event reminder</td>
+                                            <td class="text-dark">Networking event at 7PM tomorrow</td>
+                                            <td class="text-center">
+                                                <button class="btn btn-no-focus"><i class="bi bi-pencil-fill"></i></button>
+                                                <button class="btn btn-no-focus"><i class="bi bi-trash-fill"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-dark">5th August, 2025</td>
+                                            <td class="text-dark">Referral</td>
+                                            <td class="text-dark">Phone</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">New member referral</td>
+                                            <td class="text-dark">Referred TechStart Solutions</td>
+                                            <td class="text-center">
+                                                <button class="btn btn-no-focus"><i class="bi bi-pencil-fill"></i></button>
+                                                <button class="btn btn-no-focus"><i class="bi bi-trash-fill"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-dark">4th August, 2025</td>
+                                            <td class="text-dark">Feedback</td>
+                                            <td class="text-dark">Survey</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">Membership feedback</td>
+                                            <td class="text-dark">Very satisfied with membership benefits</td>
+                                            <td class="text-center">
+                                                <button class="btn btn-no-focus"><i class="bi bi-pencil-fill"></i></button>
+                                                <button class="btn btn-no-focus"><i class="bi bi-trash-fill"></i></button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-dark">3rd August, 2025</td>
+                                            <td class="text-dark">Email</td>
+                                            <td class="text-dark">Gmail</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">-------</td>
+                                            <td class="text-dark">Membership upgrade</td>
+                                            <td class="text-dark">Sent premium membership details</td>
+                                            <td class="text-center">
+                                                <button class="btn btn-no-focus"><i class="bi bi-pencil-fill"></i></button>
+                                                <button class="btn btn-no-focus"><i class="bi bi-trash-fill"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int MemberId { get; set; }
+    
+    private Member? member;
+    private bool showSuccessAlert = false;
+    private System.Threading.Timer? hideTimer;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (MemberId > 0)
+        {
+            member = await MemberService.GetMemberByIdAsync(MemberId);
+        }
+    }
+    
+    private void ShowAlert()
+    {
+        showSuccessAlert = true;
+        
+        hideTimer?.Dispose();
+        hideTimer = new System.Threading.Timer(_ => 
+        {
+            InvokeAsync(() => 
+            {
+                showSuccessAlert = false;
+                StateHasChanged();
+            });
+        }, null, 2000, System.Threading.Timeout.Infinite);
+    }
+    
+    public void Dispose()
+    {
+        hideTimer?.Dispose();
+    }
+}

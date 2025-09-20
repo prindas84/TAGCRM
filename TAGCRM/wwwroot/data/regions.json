@@ -1,0 +1,122 @@
+[
+    {
+        "id": 1,
+        "name": "Sydney"
+    },
+    {
+        "id": 2,
+        "name": "Newcastle & Hunter"
+    },
+    {
+        "id": 3,
+        "name": "Central Coast"
+    },
+    {
+        "id": 4,
+        "name": "Illawarra"
+    },
+    {
+        "id": 5,
+        "name": "Northern NSW"
+    },
+    {
+        "id": 6,
+        "name": "South Coast NSW"
+    },
+    {
+        "id": 7,
+        "name": "Western Sydney"
+    },
+    {
+        "id": 8,
+        "name": "Regional NSW"
+    },
+    {
+        "id": 9,
+        "name": "Melbourne"
+    },
+    {
+        "id": 10,
+        "name": "Geelong"
+    },
+    {
+        "id": 11,
+        "name": "Ballarat"
+    },
+    {
+        "id": 12,
+        "name": "Bendigo"
+    },
+    {
+        "id": 13,
+        "name": "Gippsland"
+    },
+    {
+        "id": 14,
+        "name": "Mornington Peninsula"
+    },
+    {
+        "id": 15,
+        "name": "Regional Victoria"
+    },
+    {
+        "id": 16,
+        "name": "Brisbane"
+    },
+    {
+        "id": 17,
+        "name": "Gold Coast"
+    },
+    {
+        "id": 18,
+        "name": "Sunshine Coast"
+    },
+    {
+        "id": 19,
+        "name": "Toowoomba & Darling Downs"
+    },
+    {
+        "id": 20,
+        "name": "Central Queensland"
+    },
+    {
+        "id": 21,
+        "name": "North Queensland"
+    },
+    {
+        "id": 22,
+        "name": "Far North Queensland"
+    },
+    {
+        "id": 23,
+        "name": "Adelaide"
+    },
+    {
+        "id": 24,
+        "name": "Regional South Australia"
+    },
+    {
+        "id": 25,
+        "name": "Perth"
+    },
+    {
+        "id": 26,
+        "name": "South West WA"
+    },
+    {
+        "id": 27,
+        "name": "Regional Western Australia"
+    },
+    {
+        "id": 28,
+        "name": "Hobart"
+    },
+    {
+        "id": 29,
+        "name": "Launceston & North East Tasmania"
+    },
+    {
+        "id": 30,
+        "name": "Regional Tasmania"
+    }
+]

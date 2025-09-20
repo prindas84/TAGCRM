@@ -1,0 +1,324 @@
+[
+  {
+    "id": 1,
+    "contactId": 1,
+    "content": "Initial phone call went well.\nJohn is interested in expanding his business operations.\nScheduled follow-up for next Tuesday.",
+    "timestamp": "2025-09-15T10:30:00Z",
+    "staffName": "Sarah Johnson"
+  },
+  {
+    "id": 2,
+    "contactId": 1,
+    "content": "Follow-up meeting completed.\nDiscussed Makita tool preferences and current supplier issues.\nSent quote for premium membership package.",
+    "timestamp": "2025-09-10T14:20:00Z",
+    "staffName": "Mike Wilson"
+  },
+  {
+    "id": 3,
+    "contactId": 2,
+    "content": "Sarah called regarding project management software.\nInterested in integration capabilities.\nDeWalt tools are her preference for site work.",
+    "timestamp": "2025-09-14T09:15:00Z",
+    "staffName": "Emma Davis"
+  },
+  {
+    "id": 4,
+    "contactId": 2,
+    "content": "Met at industry conference.\nDiscussed workflow optimization strategies.\nPrefers email communication over phone calls.",
+    "timestamp": "2025-09-08T16:45:00Z",
+    "staffName": "James Brown"
+  },
+  {
+    "id": 5,
+    "contactId": 3,
+    "content": "Site visit completed at Mike's location.\nMilwaukee tools inventory reviewed.\nEarly start times (6am) work well for his schedule.",
+    "timestamp": "2025-09-13T07:00:00Z",
+    "staffName": "Lisa Chen"
+  },
+  {
+    "id": 6,
+    "contactId": 3,
+    "content": "Fishing trip networking event.\nDiscussed Ford Ranger modifications for work sites.\nVery knowledgeable about camping equipment suppliers.",
+    "timestamp": "2025-09-06T18:30:00Z",
+    "staffName": "Robert Taylor"
+  },
+  {
+    "id": 7,
+    "contactId": 4,
+    "content": "Operations review meeting with Emma.\nBosch tool training program discussed.\nShe's very detail-oriented and thorough.",
+    "timestamp": "2025-09-12T11:00:00Z",
+    "staffName": "Amanda White"
+  },
+  {
+    "id": 8,
+    "contactId": 4,
+    "content": "Allergy protocol established for site visits.\nNo peanut products in meeting rooms.\nRunning club member - very health conscious.",
+    "timestamp": "2025-09-05T13:20:00Z",
+    "staffName": "David Martinez"
+  },
+  {
+    "id": 9,
+    "contactId": 5,
+    "content": "James is currently on extended leave.\nEstimating work will resume in Q1 next year.\nContact Sophie (spouse) for urgent matters.",
+    "timestamp": "2025-09-11T15:45:00Z",
+    "staffName": "Jennifer Lee"
+  },
+  {
+    "id": 10,
+    "contactId": 5,
+    "content": "Pre-leave handover completed.\nMakita tool preferences documented.\nGolf tournament invitation extended for his return.",
+    "timestamp": "2025-08-28T10:30:00Z",
+    "staffName": "Kevin Anderson"
+  },
+  {
+    "id": 11,
+    "contactId": 6,
+    "content": "Procurement meeting with Lisa.\nGreen tea preference noted for future meetings.\nText messaging is her preferred communication method.",
+    "timestamp": "2025-09-10T14:15:00Z",
+    "staffName": "Michelle Thompson"
+  },
+  {
+    "id": 12,
+    "contactId": 6,
+    "content": "Baking supplies discussion led to business opportunity.\nDeWalt tool procurement for new project approved.\nEric (spouse) also works in construction industry.",
+    "timestamp": "2025-09-03T09:45:00Z",
+    "staffName": "Steven Garcia"
+  },
+  {
+    "id": 13,
+    "contactId": 7,
+    "content": "Remote site electrical work coordination.\nMilwaukee tools inventory checked.\nCycling route recommendations exchanged.",
+    "timestamp": "2025-09-09T08:20:00Z",
+    "staffName": "Nicole Rodriguez"
+  },
+  {
+    "id": 14,
+    "contactId": 7,
+    "content": "Weekend on-call schedule established.\nMitsubishi Triton equipment transport discussed.\nFamily introduction - Hannah and Leo mentioned.",
+    "timestamp": "2025-09-02T17:00:00Z",
+    "staffName": "Mark Thomas"
+  },
+  {
+    "id": 15,
+    "contactId": 8,
+    "content": "VisionTech Systems partnership discussion.\nChardonnay preference for client events noted.\nYoga studio recommendations shared.",
+    "timestamp": "2025-09-16T14:30:00Z",
+    "staffName": "John Smith"
+  },
+  {
+    "id": 16,
+    "contactId": 8,
+    "content": "Sales targets exceeded this quarter.\nBosch tool demonstrations scheduled.\nAvailable after 10am - morning schedule protected.",
+    "timestamp": "2025-09-13T09:15:00Z",
+    "staffName": "Sarah Johnson"
+  },
+  {
+    "id": 17,
+    "contactId": 9,
+    "content": "Carpentry project specifications reviewed.\nMakita tool set customization discussed.\nSpanish language support may be needed for some documentation.",
+    "timestamp": "2025-09-08T12:30:00Z",
+    "staffName": "Rachel Adams"
+  },
+  {
+    "id": 18,
+    "contactId": 9,
+    "content": "Soccer league networking event.\nWoodworking hobby creates potential partnership opportunities.\nToyota Hilux modification recommendations provided.",
+    "timestamp": "2025-09-01T19:15:00Z",
+    "staffName": "Christopher Moore"
+  },
+  {
+    "id": 19,
+    "contactId": 10,
+    "content": "Marketing campaign collaboration initiated.\nZoom meetings preferred over phone calls.\nPhotography skills could benefit product marketing.",
+    "timestamp": "2025-09-07T11:45:00Z",
+    "staffName": "Ashley Clark"
+  },
+  {
+    "id": 20,
+    "contactId": 10,
+    "content": "Travel industry insights shared.\nBosch tool photography for catalog discussed.\nIced latte preference for morning meetings.",
+    "timestamp": "2025-08-30T10:20:00Z",
+    "staffName": "Brian Lewis"
+  },
+  {
+    "id": 21,
+    "contactId": 11,
+    "content": "Night shift coordination challenges addressed.\nDeWalt tool inventory for warehouse operations.\nCricket match invitation extended.",
+    "timestamp": "2025-09-06T22:30:00Z",
+    "staffName": "Stephanie Walker"
+  },
+  {
+    "id": 22,
+    "contactId": 11,
+    "content": "Warehouse efficiency improvements discussed.\nHolden Colorado loading specifications reviewed.\nFamily considerations for shift scheduling.",
+    "timestamp": "2025-08-29T23:15:00Z",
+    "staffName": "Daniel Hall"
+  },
+  {
+    "id": 23,
+    "contactId": 12,
+    "content": "Service coordination protocols updated.\nGardening club connection made for team building.\nFriday meeting avoidance policy confirmed.",
+    "timestamp": "2025-09-05T13:45:00Z",
+    "staffName": "Kimberly Young"
+  },
+  {
+    "id": 24,
+    "contactId": 12,
+    "content": "Makita tool service schedules coordinated.\nHerbal tea selection for office kitchen expanded.\nGrace's school schedule accommodations noted.",
+    "timestamp": "2025-08-28T16:30:00Z",
+    "staffName": "Matthew King"
+  },
+  {
+    "id": 25,
+    "contactId": 13,
+    "content": "Plumbing emergency response protocols established.\nMilwaukee tool maintenance schedule created.\nHome brewing hobby discussion led to team event idea.",
+    "timestamp": "2025-09-04T07:45:00Z",
+    "staffName": "John Smith"
+  },
+  {
+    "id": 26,
+    "contactId": 13,
+    "content": "Weekend on-call availability confirmed.\nPale ale preference for after-work events.\nNissan Navara equipment specifications discussed.",
+    "timestamp": "2025-08-27T18:20:00Z",
+    "staffName": "Sarah Johnson"
+  },
+  {
+    "id": 27,
+    "contactId": 14,
+    "content": "HR coordination for tool safety training.\nStationery supply preferences documented.\nPilates class schedule coordination for team wellness.",
+    "timestamp": "2025-09-03T14:20:00Z",
+    "staffName": "Mike Wilson"
+  },
+  {
+    "id": 28,
+    "contactId": 14,
+    "content": "Podcast recommendations shared during break.\nBosch tool safety certification tracking.\nCappuccino machine upgrade approved for break room.",
+    "timestamp": "2025-08-26T11:10:00Z",
+    "staffName": "Emma Davis"
+  },
+  {
+    "id": 29,
+    "contactId": 15,
+    "content": "Financial reporting requirements reviewed.\nPersonal phone number policy after 6pm established.\nChess club formation discussion for employee engagement.",
+    "timestamp": "2025-09-02T17:45:00Z",
+    "staffName": "James Brown"
+  },
+  {
+    "id": 30,
+    "contactId": 15,
+    "content": "DeWalt tool budget allocations approved.\nBMW maintenance cost comparisons for company fleet.\nScotch tasting event planning for client entertainment.",
+    "timestamp": "2025-08-25T15:30:00Z",
+    "staffName": "Lisa Chen"
+  },
+  {
+    "id": 31,
+    "contactId": 16,
+    "content": "Paperless contract administration system implemented.\nTrail running routes shared for team building activities.\nMakita tool contract specifications finalized.",
+    "timestamp": "2025-09-01T12:15:00Z",
+    "staffName": "Robert Taylor"
+  },
+  {
+    "id": 32,
+    "contactId": 16,
+    "content": "Volkswagen Golf efficiency compared to work vehicles.\nFlat white coffee machine calibration completed.\nContract template updates for digital workflows.",
+    "timestamp": "2025-08-24T09:40:00Z",
+    "staffName": "Amanda White"
+  },
+  {
+    "id": 33,
+    "contactId": 17,
+    "content": "IT support ticket system preferences established.\nGaming setup recommendations for office break room.\nBosch tool software integration requirements.",
+    "timestamp": "2025-08-31T14:50:00Z",
+    "staffName": "David Martinez"
+  },
+  {
+    "id": 34,
+    "contactId": 17,
+    "content": "Energy drink supply for night shifts arranged.\nToyota Camry fleet maintenance scheduling.\nTicket-based communication protocol confirmed.",
+    "timestamp": "2025-08-23T16:25:00Z",
+    "staffName": "Jennifer Lee"
+  },
+  {
+    "id": 35,
+    "contactId": 18,
+    "content": "HVAC system maintenance schedule coordinated.\nPolice check validation completed and filed.\nMilwaukee tool HVAC-specific training arranged.",
+    "timestamp": "2025-08-30T10:35:00Z",
+    "staffName": "Kevin Anderson"
+  },
+  {
+    "id": 36,
+    "contactId": 18,
+    "content": "DIY project collaboration for office improvements.\nFord Transit equipment organization optimized.\nCamping gear recommendations for team retreat.",
+    "timestamp": "2025-08-22T13:20:00Z",
+    "staffName": "Michelle Thompson"
+  },
+  {
+    "id": 37,
+    "contactId": 19,
+    "content": "Sales engineering project specifications reviewed.\nEarly morning meeting preferences accommodated.\nCycling team formation discussion initiated.",
+    "timestamp": "2025-08-29T06:45:00Z",
+    "staffName": "Steven Garcia"
+  },
+  {
+    "id": 38,
+    "contactId": 19,
+    "content": "DeWalt tool technical specifications updated.\nFlat white coffee quality standards established.\nIsuzu D-Max payload calculations completed.",
+    "timestamp": "2025-08-21T08:15:00Z",
+    "staffName": "Nicole Rodriguez"
+  },
+  {
+    "id": 39,
+    "contactId": 20,
+    "content": "Four-day work schedule coordination completed.\nPilates class scheduling for employee wellness program.\nBosch tool operations training for Monday-Thursday crew.",
+    "timestamp": "2025-08-28T11:30:00Z",
+    "staffName": "Mark Thomas"
+  },
+  {
+    "id": 40,
+    "contactId": 20,
+    "content": "Sparkling water preference noted for meetings.\nMazda 3 fuel efficiency comparison for company fleet.\nReading club formation discussed for team building.",
+    "timestamp": "2025-08-20T15:45:00Z",
+    "staffName": "Rachel Adams"
+  },
+  {
+    "id": 41,
+    "contactId": 21,
+    "content": "Teams meeting platform optimization completed.\nSurfing schedule coordination with project deadlines.\nMakita tool project engineering specifications.",
+    "timestamp": "2025-08-27T09:20:00Z",
+    "staffName": "Christopher Moore"
+  },
+  {
+    "id": 42,
+    "contactId": 21,
+    "content": "Toyota Prado equipment transport efficiency review.\nAmericano coffee machine installation approved.\nProject timeline adjustments for surfing season.",
+    "timestamp": "2025-08-19T14:10:00Z",
+    "staffName": "Ashley Clark"
+  },
+  {
+    "id": 43,
+    "contactId": 22,
+    "content": "Part-time schedule coordination for Tuesday-Thursday.\nKnitting circle invitation extended for team bonding.\nBosch tool accounts payable processing procedures.",
+    "timestamp": "2025-08-26T10:45:00Z",
+    "staffName": "Brian Lewis"
+  },
+  {
+    "id": 44,
+    "contactId": 22,
+    "content": "Toyota Corolla maintenance cost analysis completed.\nTea selection expanded for break room amenities.\nThree-day work week efficiency metrics reviewed.",
+    "timestamp": "2025-08-18T12:30:00Z",
+    "staffName": "Stephanie Walker"
+  },
+  {
+    "id": 45,
+    "contactId": 23,
+    "content": "Business analysis methodology workshops scheduled.\nGuitar practice room setup approved for lunch breaks.\nDeWalt tool performance analytics review.",
+    "timestamp": "2025-08-25T13:55:00Z",
+    "staffName": "Daniel Hall"
+  },
+  {
+    "id": 46,
+    "contactId": 23,
+    "content": "Concise agenda templates created for all meetings.\nSwimming pool access negotiated for employee wellness.\nLatte machine upgrade approved for increased productivity.",
+    "timestamp": "2025-08-17T16:40:00Z",
+    "staffName": "Kimberly Young"
+  }
+]

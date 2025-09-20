@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "name": "Credit Card"
+  },
+  {
+    "id": 2,
+    "name": "Direct Debit"
+  },
+  {
+    "id": 3,
+    "name": "Invoice"
+  },
+  {
+    "id": 4,
+    "name": "None"
+  }
+]

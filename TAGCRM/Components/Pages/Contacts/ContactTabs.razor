@@ -1,0 +1,20 @@
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="tab-container">
+    <div class="tab-header">
+        <a href="/contacts/@ContactId" class="tab-button @(ActiveTab == "contact" ? "active" : "")">
+            Contact
+        </a>
+        @if (ContactId > 0)
+        {
+            <a href="/contacts/history/@ContactId" class="tab-button @(ActiveTab == "history" ? "active" : "")">
+                History
+            </a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int ContactId { get; set; }
+    [Parameter] public string ActiveTab { get; set; } = "contact";
+}

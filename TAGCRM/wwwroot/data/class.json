@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "name": "Business Builder"
+  },
+  {
+    "id": 2,
+    "name": "Residential Builder"
+  },
+  {
+    "id": 3,
+    "name": "Commercial Builder"
+  },
+  {
+    "id": 4,
+    "name": "Domestic Electrician"
+  },
+  {
+    "id": 5,
+    "name": "Commercial Electrician"
+  },
+  {
+    "id": 6,
+    "name": "Industrial Electrician"
+  },
+  {
+    "id": 7,
+    "name": "Residential Plumber"
+  },
+  {
+    "id": 8,
+    "name": "Commercial Plumber"
+  },
+  {
+    "id": 9,
+    "name": "Gas Plumber"
+  },
+  {
+    "id": 10,
+    "name": "Framing Carpenter"
+  },
+  {
+    "id": 11,
+    "name": "Finishing Carpenter"
+  },
+  {
+    "id": 12,
+    "name": "Cabinet Carpenter"
+  },
+  {
+    "id": 13,
+    "name": "Metal Roofer"
+  },
+  {
+    "id": 14,
+    "name": "Tile Roofer"
+  },
+  {
+    "id": 15,
+    "name": "Flat Roofer"
+  },
+  {
+    "id": 16,
+    "name": "Interior Painter"
+  },
+  {
+    "id": 17,
+    "name": "Exterior Painter"
+  },
+  {
+    "id": 18,
+    "name": "Spray Painter"
+  },
+  {
+    "id": 19,
+    "name": "Wall Tiler"
+  },
+  {
+    "id": 20,
+    "name": "Floor Tiler"
+  },
+  {
+    "id": 21,
+    "name": "Stone Tiler"
+  },
+  {
+    "id": 22,
+    "name": "Garden Landscaper"
+  },
+  {
+    "id": 23,
+    "name": "Hardscape Landscaper"
+  },
+  {
+    "id": 24,
+    "name": "Irrigation Landscaper"
+  },
+  {
+    "id": 25,
+    "name": "Residential Concreter"
+  },
+  {
+    "id": 26,
+    "name": "Commercial Concreter"
+  },
+  {
+    "id": 27,
+    "name": "Decorative Concreter"
+  },
+  {
+    "id": 28,
+    "name": "Residential HVAC"
+  },
+  {
+    "id": 29,
+    "name": "Commercial HVAC"
+  },
+  {
+    "id": 30,
+    "name": "Industrial HVAC"
+  },
+  {
+    "id": 31,
+    "name": "Window Glazier"
+  },
+  {
+    "id": 32,
+    "name": "Shopfront Glazier"
+  },
+  {
+    "id": 33,
+    "name": "Curtain Wall Glazier"
+  },
+  {
+    "id": 34,
+    "name": "Carpet Installer"
+  },
+  {
+    "id": 35,
+    "name": "Timber Flooring Installer"
+  },
+  {
+    "id": 36,
+    "name": "Vinyl Flooring Installer"
+  },
+  {
+    "id": 37,
+    "name": "Residential Demolition"
+  },
+  {
+    "id": 38,
+    "name": "Commercial Demolition"
+  },
+  {
+    "id": 39,
+    "name": "Selective Demolition"
+  },
+  {
+    "id": 40,
+    "name": "Bulk Insulation Installer"
+  },
+  {
+    "id": 41,
+    "name": "Reflective Insulation Installer"
+  },
+  {
+    "id": 42,
+    "name": "Composite Insulation Installer"
+  },
+  {
+    "id": 43,
+    "name": "Residential Scaffolder"
+  },
+  {
+    "id": 44,
+    "name": "Commercial Scaffolder"
+  },
+  {
+    "id": 45,
+    "name": "Industrial Scaffolder"
+  }
+]

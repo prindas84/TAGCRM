@@ -1,0 +1,1740 @@
+@page "/members/new"
+@page "/members/{memberId:int}"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@using TAGCRM.Models
+@using TAGCRM.Services
+
+@attribute [Authorize]
+@inject MemberService MemberService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Member Details - Trade Alliance Group</PageTitle>
+
+<div class="container-fluid page-container-section mb-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="page-title">Member Record</h1>
+            <div class="mobile-button-container">
+                <button type="button" class="btn btn-primary create-record-button mobile-button" @onclick="SaveAsync">
+                    @(IsNew ? "Create Member" : "Update Member")
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button type="button" class="btn btn-primary create-record-button desktop-button" @onclick="SaveAsync">
+                @(IsNew ? "Create Member" : "Update Member")
+            </button>
+        </div>
+    </div>
+
+    @if (MemberId > 0)
+    {
+        <MemberTabs MemberId="MemberId" ActiveTab="company" />
+    }
+
+    @if (showSuccessAlert)
+    {
+        <div class="alert alert-success mt-3" role="alert">
+            @successMessage
+        </div>
+    }
+
+    @if (activeAlerts.Any())
+    {
+        <div class="alert alert-danger mt-3" role="alert">
+            <h5 class="alert-heading">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Active Alerts
+            </h5>
+            @foreach (var alert in activeAlerts)
+            {
+                <div class="mb-2">
+                    <strong>@GetAlertTypeName(alert.AlertType):</strong> @alert.Alert
+                    <small class="d-block text-muted">@alert.Start - @alert.End</small>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="row">
+        <!-- LEFT -->
+        <div class="col-md-5">
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#companyDetails" aria-expanded="true">
+                            Company Details
+                        </button>
+                    </h2>
+                    <div id="companyDetails" class="accordion-collapse collapse show">
+                        <div class="accordion-body">
+                            @if (member is not null)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Active</label>
+                                    <div class="form-check form-switch">
+                                        <InputCheckbox @bind-Value="member.Active" class="form-check-input record-toggles"
+                                            id="activeToggle" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Email Subscribed</label>
+                                    <div class="form-check form-switch">
+                                        <InputCheckbox @bind-Value="member.EmailSubscribed"
+                                            class="form-check-input record-toggles" id="emailSubscribedToggle" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Business Name</label>
+                                    <input class="form-control" @bind="member.BusinessName" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Legal Name</label>
+                                    <input class="form-control" @bind="member.LegalName" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Member ID</label>
+                                    <input class="form-control" @bind="member.MemberId" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Phone</label>
+                                    <div class="input-group">
+                                        <input class="form-control" @bind="member.Phone" />
+                                        @if (!string.IsNullOrWhiteSpace(member.Phone))
+                                        {
+                                            <a class="input-group-text link-icon" href="tel:@member.Phone" title="Call">
+                                                <i class="bi bi-telephone-fill"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Email</label>
+                                    <div class="input-group">
+                                        <input type="email" class="form-control" @bind="member.Email" />
+                                        @if (!string.IsNullOrWhiteSpace(member.Email))
+                                        {
+                                            <a class="input-group-text link-icon" href="mailto:@member.Email"
+                                                title="Send Email">
+                                                <i class="bi bi-envelope-fill"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Relationship Manager</label>
+                                    <select class="form-select" @bind="member.RelationshipManager">
+                                        <option value="0">Select a relationship manager...</option>
+                                        @foreach (var staff in staffMembers)
+                                        {
+                                            <option value="@staff.Id">@staff.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Primary Contact</label>
+                                    <div class="input-group">
+                                        <input class="form-control" placeholder="Search contact…" @bind="ContactQuery"
+                                            @bind:event="oninput" @onfocus="() => ShowContactList(true)"
+                                            @onblur="HideContactListDelayed" />
+                                        @if (member.PrimaryContactId > 0)
+                                        {
+                                            <a class="input-group-text link-icon" href="/contacts/@member.PrimaryContactId"
+                                                target="_blank" title="View Contact">
+                                                <i class="bi bi-person-fill"></i>
+                                            </a>
+                                        }
+                                        @if (showContactList && contactResults.Any())
+                                        {
+                                            <ul class="list-group position-absolute w-100" style="z-index: 1000; top: 100%;">
+                                                @foreach (var c in contactResults)
+                                                {
+                                                    <li class="list-group-item list-group-item-action"
+                                                        @onclick="() => SelectContact(c)">
+                                                        @GetContactDisplayName(c)
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+                                    <div class="form-text">
+                                        @if (!string.IsNullOrWhiteSpace(ContactQuery) && !contactResults.Any())
+                                        {
+                                            <span>No matches</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2 mt-4">
+                                    <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                        @(IsNew ? "Create Member" : "Update Member")
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted">Loading…</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="col-md-7">
+            <!-- Additional Information -->
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#additionalInformation" aria-expanded="false">
+                            Additional Information
+                        </button>
+                    </h2>
+                    <div id="additionalInformation" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            @if (member is not null)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Legacy Member ID</label>
+                                    <input class="form-control" @bind="member.LegacyMemberID" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Legal Structure</label>
+                                    <select class="form-select" @bind="member.LegalStructure">
+                                        <option value="0">Select a legal structure...</option>
+                                        @foreach (var legal in legalStructures)
+                                        {
+                                            <option value="@legal.Id">@legal.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">ABN</label>
+                                    <div class="input-group">
+                                        <input class="form-control" @bind="member.Abn" />
+                                        @if (!string.IsNullOrWhiteSpace(member.Abn))
+                                        {
+                                            <a class="input-group-text link-icon" href="https://abr.business.gov.au/"
+                                                target="_blank" title="Search ABN">
+                                                <i class="bi bi-search"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Building Organisation</label>
+                                    <select class="form-select" @bind="member.BuildingOrganisation">
+                                        <option value="0">Select a building organisation...</option>
+                                        @foreach (var org in organisations)
+                                        {
+                                            <option value="@org.Id">@org.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">License Number</label>
+                                    <input class="form-control" @bind="member.LicenceNumber" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Estimating Package</label>
+                                    <select class="form-select" @bind="member.EstimatingPackage">
+                                        <option value="0">Select an estimating package...</option>
+                                        @foreach (var package in estimatingPackages)
+                                        {
+                                            <option value="@package.Id">@package.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                        @(IsNew ? "Create Member" : "Update Member")
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted">Loading…</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Regions -->
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#regions" aria-expanded="false">
+                            Regions
+                        </button>
+                    </h2>
+                    <div id="regions" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            @if (member is not null)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Show All</label>
+                                    <div class="form-check form-switch">
+                                        <InputCheckbox @bind-Value="showAllRegions" class="form-check-input record-toggles"
+                                            id="showAllRegionsToggle" />
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    @{
+                                        var regionsToShow = showAllRegions ? regions : regions.Where(r =>
+                                        member.Regions.Contains(r.Id)).ToList();
+                                    }
+
+                                    @foreach (var region in regionsToShow)
+                                    {
+                                        <div class="col-md-6 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="region_@region.Id"
+                                                    checked="@member.Regions.Contains(region.Id)"
+                                                    @onchange="@((ChangeEventArgs e) => ToggleRegion(region.Id, (bool)e.Value!))" />
+                                                <label class="form-check-label checkbox-label" for="region_@region.Id">
+                                                    @region.Name
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                @if (!showAllRegions && !member.Regions.Any())
+                                {
+                                    <div class="text-muted text-center py-3">
+                                        No regions selected. Toggle "Show All" to see available regions.
+                                    </div>
+                                }
+
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                        @(IsNew ? "Create Member" : "Update Member")
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted">Loading…</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Addresses -->
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#addresses" aria-expanded="false">
+                            Addresses
+                        </button>
+                    </h2>
+                    <div id="addresses" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            @if (member is not null)
+                            {
+                                <!-- Business Address -->
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Business Address</label>
+                                    <input class="form-control" @bind="member.BusinessAddress"
+                                        placeholder="Business Address" />
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label field-label">City</label>
+                                        <input class="form-control" @bind="member.BusinessCity" placeholder="City" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label field-label">State</label>
+                                        <input class="form-control" @bind="member.BusinessState" placeholder="State" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label field-label">Postcode</label>
+                                        <input class="form-control" @bind="member.BusinessPostCode"
+                                            placeholder="Postcode" />
+                                    </div>
+                                </div>
+
+                                <hr style="margin-top: 30px; margin-bottom: 24px;" />
+
+                                <!-- Postal Address -->
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Postal Address</label>
+                                    <input class="form-control" @bind="member.PostalAddress" placeholder="Postal Address" />
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label field-label">City</label>
+                                        <input class="form-control" @bind="member.PostalCity" placeholder="City" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label field-label">State</label>
+                                        <input class="form-control" @bind="member.PostalState" placeholder="State" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label field-label">Postcode</label>
+                                        <input class="form-control" @bind="member.PostalPostCode" placeholder="Postcode" />
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                        @(IsNew ? "Create Member" : "Update Member")
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted">Loading…</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!IsNew)
+            {
+                <!-- Contacts -->
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#contacts" aria-expanded="false">
+                                Contacts
+                            </button>
+                        </h2>
+                        <div id="contacts" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (member is not null)
+                                {
+                                    <!-- Create Contact Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <a href="/contacts/new" target="_blank"
+                                            class="btn btn-primary create-record-button record-buttons">
+                                            + Create Contact
+                                        </a>
+                                    </div>
+
+                                    <!-- Contacts List -->
+                                    @if (memberContacts.Any())
+                                    {
+                                        @foreach (var contact in memberContacts.OrderBy(c => c.FirstName).ThenBy(c => c.Surname))
+                                        {
+                                            <div class="d-flex align-items-center mb-3 p-2" style="border-bottom: 1px solid #e9ecef;">
+                                                <!-- Avatar -->
+                                                <div class="me-3">
+                                                    @if (!string.IsNullOrWhiteSpace(contact.Avatar))
+                                                    {
+                                                        <img src="/avatars/@contact.Avatar" alt="@contact.FirstName @contact.Surname"
+                                                            class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
+                                                            style="width: 50px; height: 50px;">
+                                                            <i class="bi bi-person-fill"></i>
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                <!-- Contact Details -->
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-bold">
+                                                        @GetContactDisplayName(contact)
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        @contact.JobRole
+                                                        @if (member.PrimaryContactId == contact.Id)
+                                                        {
+                                                            <span class="badge bg-primary ms-1">Primary Contact</span>
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                <!-- Action Icons -->
+                                                <div class="d-flex gap-2">
+                                                    @if (!string.IsNullOrWhiteSpace(contact.Phone))
+                                                    {
+                                                        <a href="tel:@contact.Phone" class="input-group-text link-icon"
+                                                            title="Call @contact.FirstName">
+                                                            <i class="bi bi-telephone-fill"></i>
+                                                        </a>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(contact.Email))
+                                                    {
+                                                        <a href="mailto:@contact.Email" class="input-group-text link-icon"
+                                                            title="Email @contact.FirstName">
+                                                            <i class="bi bi-envelope-fill"></i>
+                                                        </a>
+                                                    }
+                                                    <a href="/contacts/@contact.Id" class="input-group-text link-icon" target="_blank"
+                                                        title="View Contact">
+                                                        <i class="bi bi-person-fill"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted text-center py-4">
+                                            No contacts found for this member.
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Social Media -->
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#socialMedia" aria-expanded="false">
+                            Website & Social Media
+                        </button>
+                    </h2>
+                    <div id="socialMedia" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            @if (member is not null)
+                            {
+                                <div class="row">
+                                    <!-- Left Column -->
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Website URL</label>
+                                            <div class="input-group">
+                                                <input class="form-control" @bind="member.Website"
+                                                    placeholder="Website URL" />
+                                                @if (!string.IsNullOrWhiteSpace(member.Website))
+                                                {
+                                                    <a class="input-group-text link-icon" href="@member.Website" target="_blank"
+                                                        title="Visit Website">
+                                                        <i class="bi bi-globe"></i>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Facebook URL</label>
+                                            <div class="input-group">
+                                                <input class="form-control" @bind="member.Facebook"
+                                                    placeholder="Facebook URL" />
+                                                @if (!string.IsNullOrWhiteSpace(member.Facebook))
+                                                {
+                                                    <a class="input-group-text link-icon" href="@member.Facebook"
+                                                        target="_blank" title="Visit Facebook">
+                                                        <i class="bi bi-facebook"></i>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">Instagram URL</label>
+                                            <div class="input-group">
+                                                <input class="form-control" @bind="member.Instagram"
+                                                    placeholder="Instagram URL" />
+                                                @if (!string.IsNullOrWhiteSpace(member.Instagram))
+                                                {
+                                                    <a class="input-group-text link-icon" href="@member.Instagram"
+                                                        target="_blank" title="Visit Instagram">
+                                                        <i class="bi bi-instagram"></i>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Column -->
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">LinkedIn URL</label>
+                                            <div class="input-group">
+                                                <input class="form-control" @bind="member.Linkedin"
+                                                    placeholder="LinkedIn URL" />
+                                                @if (!string.IsNullOrWhiteSpace(member.Linkedin))
+                                                {
+                                                    <a class="input-group-text link-icon" href="@member.Linkedin"
+                                                        target="_blank" title="Visit LinkedIn">
+                                                        <i class="bi bi-linkedin"></i>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">TikTok URL</label>
+                                            <div class="input-group">
+                                                <input class="form-control" @bind="member.Tiktok"
+                                                    placeholder="TikTok URL" />
+                                                @if (!string.IsNullOrWhiteSpace(member.Tiktok))
+                                                {
+                                                    <a class="input-group-text link-icon" href="@member.Tiktok" target="_blank"
+                                                        title="Visit TikTok">
+                                                        <i class="bi bi-tiktok"></i>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label field-label">X URL</label>
+                                            <div class="input-group">
+                                                <input class="form-control" @bind="member.X" placeholder="X URL" />
+                                                @if (!string.IsNullOrWhiteSpace(member.X))
+                                                {
+                                                    <a class="input-group-text link-icon" href="@member.X" target="_blank"
+                                                        title="Visit X">
+                                                        <i class="bi bi-twitter-x"></i>
+                                                    </a>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                        @(IsNew ? "Create Member" : "Update Member")
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted">Loading…</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!IsNew)
+            {
+                <!-- Tasks -->
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#tasks" aria-expanded="false">
+                                Tasks
+                            </button>
+                        </h2>
+                        <div id="tasks" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (member is not null)
+                                {
+                                    <!-- Create Task Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <button type="button" class="btn btn-primary create-record-button record-buttons"
+                                            @onclick="ShowAddTaskModal">
+                                            + Create Task
+                                        </button>
+                                    </div>
+
+                                    <!-- Tasks Table -->
+                                    <div class="table-container">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Task</th>
+                                                    <th>Due Date</th>
+                                                    <th>Staff Member</th>
+                                                    <th class="text-center">Priority</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Follow Up</td>
+                                                    <td>7/8/2025</td>
+                                                    <td>Brett Crowther</td>
+                                                    <td class="text-center"><span class="badge bg-success">Low</span></td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View task">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete task">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Follow Up</td>
+                                                    <td>7/8/2025</td>
+                                                    <td>Matthew Prendergast</td>
+                                                    <td class="text-center"><span class="badge bg-warning">Medium</span></td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View task">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete task">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Follow Up</td>
+                                                    <td>7/8/2025</td>
+                                                    <td>Brett Crowther</td>
+                                                    <td class="text-center"><span class="badge bg-success">Low</span></td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View task">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete task">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Follow Up</td>
+                                                    <td>7/8/2025</td>
+                                                    <td>Brett Crowther</td>
+                                                    <td class="text-center"><span class="badge bg-danger">High</span></td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View task">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete task">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Alerts -->
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#alerts" aria-expanded="false">
+                                Alerts
+                            </button>
+                        </h2>
+                        <div id="alerts" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (member is not null)
+                                {
+                                    <!-- Create Alert Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <button type="button" class="btn btn-primary create-record-button record-buttons"
+                                            @onclick="ShowAddAlertModal">
+                                            + Create Alert
+                                        </button>
+                                    </div>
+
+                                    <!-- Alerts Table -->
+                                    @if (memberAlerts.Any())
+                                    {
+                                        <div class="table-container">
+                                            <table class="table table-bordered table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Type</th>
+                                                        <th>Start Date</th>
+                                                        <th>End Date</th>
+                                                        <th class="text-center">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var alert in memberAlerts)
+                                                    {
+                                                        <tr>
+                                                            <td>
+                                                                <span class="badge @GetAlertTypeBadgeClass(alert.AlertType)">
+                                                                    @GetAlertTypeName(alert.AlertType)
+                                                                </span>
+                                                            </td>
+                                                            <td>@alert.Start</td>
+                                                            <td>@alert.End</td>
+                                                            <td>
+                                                                <div class="d-flex gap-1 justify-content-center">
+                                                                    <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                        style="width: 28px; height: 28px;" title="Edit alert"
+                                                                        @onclick="() => ShowEditAlertModal(alert)">
+                                                                        <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                        style="width: 28px; height: 28px;" title="Delete alert">
+                                                                        <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted text-center py-4">
+                                            No alerts found for this member.
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accounts -->
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#accounts" aria-expanded="false">
+                                Accounts
+                            </button>
+                        </h2>
+                        <div id="accounts" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (member is not null)
+                                {
+                                    <!-- Create Account Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <a href="/accounts" target="_blank"
+                                            class="btn btn-primary create-record-button record-buttons">
+                                            + Create Account
+                                        </a>
+                                    </div>
+
+                                    <!-- Accounts Table -->
+                                    <div class="table-container">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Supplier</th>
+                                                    <th>Status</th>
+                                                    <th>Account Number</th>
+                                                    <th>Date</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Example Supplier</td>
+                                                    <td><span class="badge bg-primary">New</span></td>
+                                                    <td>1111111</td>
+                                                    <td>7/8/2025</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View account">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Example Supplier</td>
+                                                    <td><span class="badge bg-warning">Processing</span></td>
+                                                    <td>1111111</td>
+                                                    <td>7/8/2025</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View account">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Example Supplier</td>
+                                                    <td><span class="badge bg-success">Complete</span></td>
+                                                    <td>1111111</td>
+                                                    <td>7/8/2025</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View account">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Example Supplier</td>
+                                                    <td><span class="badge bg-warning">Processing</span></td>
+                                                    <td>1111111</td>
+                                                    <td>7/8/2025</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View account">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Jobs -->
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#jobs" aria-expanded="false">
+                                Jobs
+                            </button>
+                        </h2>
+                        <div id="jobs" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (member is not null)
+                                {
+                                    <!-- Create Job Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <a href="/jobs" target="_blank"
+                                            class="btn btn-primary create-record-button record-buttons">
+                                            + Create Job
+                                        </a>
+                                    </div>
+
+                                    <!-- Jobs Table -->
+                                    <div class="table-container">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Job Number</th>
+                                                    <th>Status</th>
+                                                    <th>Job Type</th>
+                                                    <th>Region</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td><span class="badge bg-primary">New</span></td>
+                                                    <td>Build</td>
+                                                    <td>Brisbane</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View job">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td><span class="badge bg-warning">Processing</span></td>
+                                                    <td>Contract</td>
+                                                    <td>Brisbane</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View job">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td><span class="badge bg-success">Complete</span></td>
+                                                    <td>Reno/Ext</td>
+                                                    <td>Brisbane</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View job">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td><span class="badge bg-warning">Processing</span></td>
+                                                    <td>Build</td>
+                                                    <td>Brisbane</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View job">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders -->
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#orders" aria-expanded="false">
+                                Orders
+                            </button>
+                        </h2>
+                        <div id="orders" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (member is not null)
+                                {
+                                    <!-- Create Order Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <a href="/orders" target="_blank"
+                                            class="btn btn-primary create-record-button record-buttons">
+                                            + Create Order
+                                        </a>
+                                    </div>
+
+                                    <!-- Orders Table -->
+                                    <div class="table-container">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Order Number</th>
+                                                    <th>Product</th>
+                                                    <th>Delivery Date</th>
+                                                    <th>Status</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td>Blocks - Concrete</td>
+                                                    <td>07/08/2025</td>
+                                                    <td><span class="badge bg-primary">New</span></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                            style="width: 28px; height: 28px;" title="View order">
+                                                            <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td>Sleepers - Concrete</td>
+                                                    <td>07/08/2025</td>
+                                                    <td><span class="badge bg-warning">Processing</span></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                            style="width: 28px; height: 28px;" title="View order">
+                                                            <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td>Sleepers - Concrete</td>
+                                                    <td>07/08/2025</td>
+                                                    <td><span class="badge bg-success">Complete</span></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                            style="width: 28px; height: 28px;" title="View order">
+                                                            <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td>Roofing - Insulated Panel</td>
+                                                    <td>07/08/2025</td>
+                                                    <td><span class="badge bg-warning">Processing</span></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                            style="width: 28px; height: 28px;" title="View order">
+                                                            <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Quotes -->
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#quotes" aria-expanded="false">
+                                Quotes
+                            </button>
+                        </h2>
+                        <div id="quotes" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (member is not null)
+                                {
+                                    <!-- Create Quote Button (like Jobs: opens /quotes in new tab) -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <a href="/quotes" target="_blank"
+                                            class="btn btn-primary create-record-button record-buttons">
+                                            + Create Quote
+                                        </a>
+                                    </div>
+
+                                    <!-- Quotes Table (hardcoded) -->
+                                    <div class="table-container">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Quote Number</th>
+                                                    <th>Product</th>
+                                                    <th>Quote Date</th>
+                                                    <th>Status</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td>Blocks - Concrete</td>
+                                                    <td>07/08/2025</td>
+                                                    <td><span class="badge bg-primary">New</span></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                            style="width: 28px; height: 28px;" title="View quote">
+                                                            <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td>Sleepers - Concrete</td>
+                                                    <td>07/08/2025</td>
+                                                    <td><span class="badge bg-warning">Processing</span></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                            style="width: 28px; height: 28px;" title="View quote">
+                                                            <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td>Sleepers - Concrete</td>
+                                                    <td>07/08/2025</td>
+                                                    <td><span class="badge bg-success">Complete</span></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                            style="width: 28px; height: 28px;" title="View quote">
+                                                            <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1111111</td>
+                                                    <td>Roofing - Insulated Panel</td>
+                                                    <td>07/08/2025</td>
+                                                    <td><span class="badge bg-warning">Processing</span></td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                            style="width: 28px; height: 28px;" title="View quote">
+                                                            <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#notes" aria-expanded="false">
+                                Notes
+                            </button>
+                        </h2>
+                        <div id="notes" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (member is not null)
+                                {
+                                    <!-- Add Note Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <button type="button" class="btn btn-primary create-record-button record-buttons"
+                                            @onclick="ShowAddNoteModal">
+                                            + Add Note
+                                        </button>
+                                    </div>
+
+                                    <!-- Notes List -->
+                                    @if (memberNotes.Any())
+                                    {
+                                        @foreach (var note in memberNotes.OrderByDescending(n => n.Timestamp))
+                                        {
+                                            <div class="card mb-2">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <small class="text-muted">
+                                                            @note.Timestamp.ToString("dd/MM/yyyy HH:mm") - @note.StaffName
+                                                        </small>
+                                                        <div class="d-flex gap-1">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Edit note"
+                                                                @onclick="() => ShowEditNoteModal(note)">
+                                                                <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete note"
+                                                                @onclick="() => DeleteNoteAsync()">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="note-content" style="white-space: pre-line;">@note.Content</div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted text-center py-4">
+                                            No notes available.
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Note Modal -->
+<div class="modal fade" id="noteModal" tabindex="-1" aria-labelledby="noteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="noteModalLabel">@(editingNoteId > 0 ? "Edit Note" : "Add Note")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <textarea class="form-control" @bind="modalNoteContent" rows="6"
+                        placeholder="Enter the note content here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn modal-confirm" @onclick="SaveModalNoteAsync" data-bs-dismiss="modal">
+                    @(editingNoteId > 0 ? "Update Note" : "Add Note")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel">Add Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label field-label">Task Type</label>
+                    <select class="form-select">
+                        <option value="">Select Task Type</option>
+                        <option value="1">Follow Up</option>
+                        <option value="2">Phone Call</option>
+                        <option value="3">Email</option>
+                        <option value="4">Meeting</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Task Name</label>
+                    <input class="form-control" placeholder="Task Name" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Task Description</label>
+                    <textarea class="form-control" rows="4" placeholder="Task Description"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Assigned To</label>
+                    <select class="form-select">
+                        <option value="">Select Staff Member</option>
+                        <option value="1">Brett Crowther</option>
+                        <option value="2">Matthew Prendergast</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Due Date</label>
+                    <input type="date" class="form-control" value="2025-09-08" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Priority</label>
+                    <select class="form-select">
+                        <option value="1">Low</option>
+                        <option value="2" selected>Medium</option>
+                        <option value="3">High</option>
+                        <option value="4">Urgent</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn modal-confirm" @onclick="SaveModalTaskAsync" data-bs-dismiss="modal">
+                    Add Task
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Modal -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="alertModalLabel">@(editingAlertId > 0 ? "Edit Alert" : "Add Alert")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label field-label">Alert Note</label>
+                    <textarea class="form-control" @bind="modalAlertNote" rows="4" placeholder="Alert Note"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Start Date</label>
+                    <input type="date" class="form-control" @bind="modalStartDate" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">End Date</label>
+                    <input type="date" class="form-control" @bind="modalEndDate" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label field-label">Alert Type</label>
+                    <select class="form-select" @bind="modalAlertType">
+                        <option value="">Select Alert Type</option>
+                        @foreach (var alertType in alertTypes)
+                        {
+                            <option value="@alertType.Id">@alertType.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn modal-confirm" @onclick="SaveModalAlertAsync" data-bs-dismiss="modal">
+                    @(editingAlertId > 0 ? "Update Alert" : "Add Alert")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int MemberId { get; set; }
+    private Member member = new();
+    private bool IsNew => MemberId <= 0 || member.Id <= 0;
+
+    // Staff members for relationship manager dropdown
+    private List<StaffMember> staffMembers = new();
+
+    // Lookup lists for Additional Information
+    private List<LegalStructure> legalStructures = new();
+    private List<Organisation> organisations = new();
+    private List<EstimatingPackage> estimatingPackages = new();
+
+    // Regions
+    private List<Region> regions = new();
+    private bool showAllRegions = true;
+
+    // Contact search functionality for Primary Contact
+    private List<Contact> allContacts = new();
+    private string contactQuery = string.Empty;
+    private List<Contact> contactResults = new();
+    private bool showContactList = false;
+
+    // Member contacts display
+    private List<Contact> memberContacts = new();
+
+    // Member notes display
+    private List<MemberNote> memberNotes = new();
+
+    // Note modal state management
+    private string modalNoteContent = string.Empty;
+    private int editingNoteId = 0;
+
+    // Alert state
+    private bool showSuccessAlert = false;
+    private string successMessage = string.Empty;
+    private System.Threading.Timer? hideTimer;
+
+    // Alert-related properties
+    private List<MemberAlert> memberAlerts = new();
+    private List<AlertType> alertTypes = new();
+
+    // Alert modal state management
+    private int editingAlertId = 0;
+    private string modalAlertNote = string.Empty;
+    private DateTime? modalStartDate = null;
+    private DateTime? modalEndDate = null;
+    private int modalAlertType = 0;
+
+    // Active alerts that fall within today's date
+    private List<MemberAlert> activeAlerts = new();
+
+    private void CheckActiveAlerts()
+    {
+        var today = DateTime.Today;
+        activeAlerts = memberAlerts.Where(alert =>
+        {
+            var startDate = DateTime.TryParse(alert.Start, out var start) ? start.Date : DateTime.MinValue;
+            var endDate = DateTime.TryParse(alert.End, out var end) ? end.Date : DateTime.MaxValue;
+
+            return today >= startDate && today <= endDate;
+        }).ToList();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (MemberId > 0)
+        {
+            // Existing member -> load it
+            member = await MemberService.GetMemberByIdAsync(MemberId)
+            ?? new Member { Id = MemberId, Active = true };
+        }
+        else
+        {
+            // New member -> start with defaults
+            member = new Member { Active = true };
+        }
+
+        // Load all lookup data
+        staffMembers = await MemberService.GetStaffMembersAsync();
+        legalStructures = await MemberService.GetLegalStructuresAsync();
+        organisations = await MemberService.GetOrganisationsAsync();
+        estimatingPackages = await MemberService.GetEstimatingPackagesAsync();
+        regions = await MemberService.GetRegionsAsync();
+        allContacts = await MemberService.GetAllContactsAsync();
+        memberAlerts = await MemberService.GetMemberAlertsAsync(MemberId);
+        alertTypes = await MemberService.GetAlertTypesAsync();
+
+        // Check for active alerts after loading
+        CheckActiveAlerts();
+
+        // Set initial show all regions state
+        showAllRegions = member.Regions.Any() ? false : true;
+
+        // Set contact query to display current primary contact name
+        contactQuery = GetPrimaryContactDisplayName();
+        FilterContacts(contactQuery);
+
+        // Load contacts for this member (where memberId matches)
+        if (MemberId > 0)
+        {
+            memberContacts = allContacts.Where(c => c.MemberId == MemberId.ToString()).ToList();
+            memberNotes = await MemberService.GetMemberNotesAsync(MemberId);
+        }
+    }
+
+    // Main save button handler (UI simulation only)
+    private async Task SaveAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Member Updated";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Display success alert with auto-hide timer and page refresh
+    private async Task ShowAlertAndScrollAsync()
+    {
+        showSuccessAlert = true;
+
+        hideTimer?.Dispose();
+        hideTimer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+    {
+            showSuccessAlert = false;
+            StateHasChanged();
+        });
+
+            // Refresh the page
+            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+
+        }, null, 2000, System.Threading.Timeout.Infinite);
+
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        hideTimer?.Dispose();
+    }
+
+    // Region selection handling
+    private void ToggleRegion(int regionId, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!member.Regions.Contains(regionId))
+            {
+                member.Regions.Add(regionId);
+            }
+        }
+        else
+        {
+            member.Regions.Remove(regionId);
+        }
+        StateHasChanged();
+    }
+
+    // Contact search functionality
+    private void ShowContactList(bool show) => showContactList = show;
+
+    private async void HideContactListDelayed(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        showContactList = false;
+        StateHasChanged();
+    }
+
+    private void FilterContacts(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            contactResults = allContacts.Take(8).ToList();
+        }
+        else
+        {
+            var q = query.Trim().ToLowerInvariant();
+            contactResults = allContacts
+            .Where(c =>
+            (!string.IsNullOrWhiteSpace(GetContactDisplayName(c)) && GetContactDisplayName(c).ToLower().Contains(q)) ||
+            (!string.IsNullOrWhiteSpace(c.Email) && c.Email.ToLower().Contains(q)) ||
+            (!string.IsNullOrWhiteSpace(c.Phone) && c.Phone.ToLower().Contains(q))
+            )
+            .OrderBy(c => GetContactDisplayName(c))
+            .Take(8)
+            .ToList();
+        }
+    }
+
+    private string ContactQuery
+    {
+        get => contactQuery;
+        set
+        {
+            contactQuery = value;
+            showContactList = true;
+            FilterContacts(contactQuery);
+        }
+    }
+
+    private void SelectContact(Contact c)
+    {
+        member.PrimaryContactId = c.Id;
+        contactQuery = GetContactDisplayName(c);
+        showContactList = false;
+    }
+
+    private string GetContactDisplayName(Contact c)
+    {
+        var first = (c.FirstName ?? "").Trim();
+        var last = (c.Surname ?? "").Trim();
+        return string.Join(" ", new[] { first, last }.Where(s => !string.IsNullOrEmpty(s)));
+    }
+
+    private string GetPrimaryContactDisplayName()
+    {
+        if (member.PrimaryContactId > 0)
+        {
+            var contact = allContacts.FirstOrDefault(c => c.Id == member.PrimaryContactId);
+            return contact != null ? GetContactDisplayName(contact) : string.Empty;
+        }
+        return string.Empty;
+    }
+
+    // Note modal functionality
+    private async Task ShowAddNoteModal()
+    {
+        editingNoteId = 0;
+        modalNoteContent = string.Empty;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('noteModal')).show()");
+    }
+
+    private async Task ShowEditNoteModal(MemberNote note)
+    {
+        editingNoteId = note.Id;
+        modalNoteContent = note.Content;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('noteModal')).show()");
+    }
+
+    private async Task SaveModalNoteAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Note updated successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    private async Task DeleteNoteAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Note deleted successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Task modal functionality (UI simulation only)
+    private async Task ShowAddTaskModal()
+    {
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('taskModal')).show()");
+    }
+
+    private async Task SaveModalTaskAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Task created successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Alert modal functionality (UI simulation only)
+    private async Task ShowAddAlertModal()
+    {
+        editingAlertId = 0;
+        modalAlertNote = string.Empty;
+        modalStartDate = null;
+        modalEndDate = null;
+        modalAlertType = 0;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('alertModal')).show()");
+    }
+
+    private async Task ShowEditAlertModal(MemberAlert alert)
+    {
+        editingAlertId = alert.Id;
+        modalAlertNote = alert.Alert;
+        modalStartDate = DateTime.TryParse(alert.Start, out var startDate) ? startDate : null;
+        modalEndDate = DateTime.TryParse(alert.End, out var endDate) ? endDate : null;
+        modalAlertType = alert.AlertType;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('alertModal')).show()");
+    }
+
+    private async Task SaveModalAlertAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = editingAlertId > 0 ? "Alert updated successfully" : "Alert created successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    private async Task DeleteAlertAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Alert deleted successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    private string GetAlertTypeBadgeClass(int alertTypeId)
+    {
+        return alertTypeId switch
+        {
+            1 => "bg-secondary", // Warning
+            2 => "bg-info", // Holidays
+            3 => "bg-danger", // Payment Overdue
+            4 => "bg-warning", // Insurance Claim
+            5 => "bg-primary", // Compliance Issue
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetAlertTypeName(int alertTypeId)
+    {
+        var alertType = alertTypes.FirstOrDefault(at => at.Id == alertTypeId);
+        return alertType?.Name ?? "Unknown";
+    }
+
+}

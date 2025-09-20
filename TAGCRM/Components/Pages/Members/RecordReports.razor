@@ -1,0 +1,337 @@
+@page "/members/reports/{memberId:int}"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@using TAGCRM.Models
+@using TAGCRM.Services
+@attribute [Authorize]
+@inject MemberService MemberService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Member Reports - Trade Alliance Group</PageTitle>
+
+<div class="container-fluid page-container-section mb-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="page-title">Member Record</h1>
+            <div class="mobile-button-container">
+                <button type="button" class="btn btn-primary create-record-button mobile-button" @onclick="SaveAsync">
+                    Update Member
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button type="button" class="btn btn-primary create-record-button desktop-button" @onclick="SaveAsync">
+                Update Member
+            </button>
+        </div>
+    </div>
+
+    @if (MemberId > 0)
+    {
+        <MemberTabs MemberId="MemberId" ActiveTab="reports" />
+    }
+
+    @if (showSuccessAlert)
+    {
+        <div class="alert alert-success mt-3" role="alert">
+            @successMessage
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="accordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#memberReports" aria-expanded="true">
+                            Member Reports
+                        </button>
+                    </h2>
+                    <div id="memberReports" class="accordion-collapse collapse show">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <div class="border p-3">
+                                        <h6>Jobs Report</h6>
+                                        <p class="text-muted small">Project pipeline and completion rates</p>
+                                        <canvas id="jobsChart" width="400" height="300"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="border p-3">
+                                        <h6>Quotes Report</h6>
+                                        <p class="text-muted small">Quote-to-win ratios and seasonal patterns</p>
+                                        <canvas id="quotesChart" width="400" height="300"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="border p-3">
+                                        <h6>Orders Report</h6>
+                                        <p class="text-muted small">Order volume trends and material demand</p>
+                                        <canvas id="ordersChart" width="400" height="300"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="border p-3">
+                                        <h6>Commission Report</h6>
+                                        <p class="text-muted small">Monthly commission trends</p>
+                                        <canvas id="commissionChart" width="400" height="300"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                    Update Member
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int MemberId { get; set; }
+
+    private Member? member;
+
+    // Alert state
+    private bool showSuccessAlert = false;
+    private string successMessage = string.Empty;
+    private System.Threading.Timer? hideTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (MemberId > 0)
+        {
+            member = await MemberService.GetMemberByIdAsync(MemberId);
+        }
+    }
+
+    // Main save button handler with scroll to top functionality
+    private async Task SaveAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Member Updated";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Display success alert with auto-hide timer and page refresh
+    private async Task ShowAlertAndScrollAsync()
+    {
+        showSuccessAlert = true;
+
+        hideTimer?.Dispose();
+        hideTimer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+            {
+                showSuccessAlert = false;
+                StateHasChanged();
+            });
+
+            // Refresh the page
+            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+
+        }, null, 2000, System.Threading.Timeout.Infinite);
+
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        hideTimer?.Dispose();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Task.Delay(500);
+            await JS.InvokeVoidAsync("eval", @"
+                if (typeof Chart === 'undefined') {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+                    script.onload = function() {
+                        setTimeout(function() {
+                            if (document.getElementById('jobsChart')) {
+                                new Chart(document.getElementById('jobsChart'), {
+                                    type: 'bar',
+                                    data: {
+                                        labels: ['New', 'In Progress', 'On Hold', 'Completed', 'Cancelled'],
+                                        datasets: [{
+                                            data: [12, 28, 5, 45, 3],
+                                            backgroundColor: ['#3498db', '#f39c12', '#e74c3c', '#2ecc71', '#95a5a6']
+                                        }]
+                                    },
+                                    options: {
+                                        plugins: { legend: { display: false } },
+                                        scales: { y: { beginAtZero: true } }
+                                    }
+                                });
+                            }
+                            
+                            if (document.getElementById('quotesChart')) {
+                                new Chart(document.getElementById('quotesChart'), {
+                                    type: 'line',
+                                    data: {
+                                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                                        datasets: [{
+                                            label: 'Quotes Sent',
+                                            data: [15, 18, 25, 32, 28, 35, 42, 38, 45, 40, 30, 22],
+                                            borderColor: '#3498db',
+                                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                            fill: true
+                                        }, {
+                                            label: 'Quotes Won',
+                                            data: [8, 10, 15, 20, 18, 22, 28, 24, 30, 26, 18, 12],
+                                            borderColor: '#2ecc71',
+                                            backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                                            fill: true
+                                        }]
+                                    },
+                                    options: {
+                                        scales: { y: { beginAtZero: true } }
+                                    }
+                                });
+                            }
+                            
+                            if (document.getElementById('ordersChart')) {
+                                new Chart(document.getElementById('ordersChart'), {
+                                    type: 'doughnut',
+                                    data: {
+                                        labels: ['Concrete Blocks', 'Steel Beams', 'Roofing', 'Insulation', 'Timber', 'Other'],
+                                        datasets: [{
+                                            data: [30, 25, 20, 12, 8, 5],
+                                            backgroundColor: ['#3498db', '#e74c3c', '#f39c12', '#2ecc71', '#9b59b6', '#95a5a6']
+                                        }]
+                                    }
+                                });
+                            }
+                            
+                            if (document.getElementById('commissionChart')) {
+                                new Chart(document.getElementById('commissionChart'), {
+                                    type: 'bar',
+                                    data: {
+                                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                                        datasets: [{
+                                            data: [6500, 7200, 8100, 9200, 8800, 10500, 11200, 9800, 10800, 9600, 7800, 6900],
+                                            backgroundColor: '#2ecc71'
+                                        }]
+                                    },
+                                    options: {
+                                        plugins: { legend: { display: false } },
+                                        scales: { 
+                                            y: { 
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return '$' + value.toLocaleString();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }, 100);
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    // Chart.js already loaded
+                    setTimeout(function() {
+                        if (document.getElementById('jobsChart')) {
+                            new Chart(document.getElementById('jobsChart'), {
+                                type: 'bar',
+                                data: {
+                                    labels: ['New', 'In Progress', 'On Hold', 'Completed', 'Cancelled'],
+                                    datasets: [{
+                                        data: [12, 28, 5, 45, 3],
+                                        backgroundColor: ['#3498db', '#f39c12', '#e74c3c', '#2ecc71', '#95a5a6']
+                                    }]
+                                },
+                                options: {
+                                    plugins: { legend: { display: false } },
+                                    scales: { y: { beginAtZero: true } }
+                                }
+                            });
+                        }
+                        
+                        if (document.getElementById('quotesChart')) {
+                            new Chart(document.getElementById('quotesChart'), {
+                                type: 'line',
+                                data: {
+                                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                                    datasets: [{
+                                        label: 'Quotes Sent',
+                                        data: [15, 18, 25, 32, 28, 35, 42, 38, 45, 40, 30, 22],
+                                        borderColor: '#3498db',
+                                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                        fill: true
+                                    }, {
+                                        label: 'Quotes Won',
+                                        data: [8, 10, 15, 20, 18, 22, 28, 24, 30, 26, 18, 12],
+                                        borderColor: '#2ecc71',
+                                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                                        fill: true
+                                    }]
+                                },
+                                options: {
+                                    scales: { y: { beginAtZero: true } }
+                                }
+                            });
+                        }
+                        
+                        if (document.getElementById('ordersChart')) {
+                            new Chart(document.getElementById('ordersChart'), {
+                                type: 'doughnut',
+                                data: {
+                                    labels: ['Concrete Blocks', 'Steel Beams', 'Roofing', 'Insulation', 'Timber', 'Other'],
+                                    datasets: [{
+                                        data: [30, 25, 20, 12, 8, 5],
+                                        backgroundColor: ['#3498db', '#e74c3c', '#f39c12', '#2ecc71', '#9b59b6', '#95a5a6']
+                                    }]
+                                }
+                            });
+                        }
+                        
+                        if (document.getElementById('commissionChart')) {
+                            new Chart(document.getElementById('commissionChart'), {
+                                type: 'bar',
+                                data: {
+                                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                                    datasets: [{
+                                        data: [6500, 7200, 8100, 9200, 8800, 10500, 11200, 9800, 10800, 9600, 7800, 6900],
+                                        backgroundColor: '#2ecc71'
+                                    }]
+                                },
+                                options: {
+                                    plugins: { legend: { display: false } },
+                                    scales: { 
+                                        y: { 
+                                            beginAtZero: true,
+                                            ticks: {
+                                                callback: function(value) {
+                                                    return '$' + value.toLocaleString();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    }, 100);
+                }
+            ");
+        }
+    }
+}

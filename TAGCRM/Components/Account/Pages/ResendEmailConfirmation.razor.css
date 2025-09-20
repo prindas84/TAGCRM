@@ -1,0 +1,14 @@
+﻿h1 {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.submit-button {
+    margin-bottom: 20px;
+    background-color: #0c426a;
+}
+
+a, .btn-link {
+    color: #62a8ea !important;
+    text-decoration: none !important;
+}

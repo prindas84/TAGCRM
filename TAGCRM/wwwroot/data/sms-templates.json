@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "templateName": "Welcome New Contact",
+    "sendFrom": "0400000000",
+    "templateContent": "Hi {firstName}, welcome to Trade Alliance Group! We're excited to work with you. If you have any questions, please don't hesitate to reach out. Thanks for choosing us!",
+    "section": "contact"
+  },
+  {
+    "id": 2,
+    "templateName": "Contact Information Confirmation",
+    "sendFrom": "0400000000",
+    "templateContent": "Hi {preferredName}, we've updated your contact details. Name: {firstName} {surname}, Email: {email}, Phone: {phone}. Please confirm this is correct by replying YES or call us to make changes.",
+    "section": "contact"
+  },
+  {
+    "id": 3,
+    "templateName": "Follow Up Message",
+    "sendFrom": "0400000000",
+    "templateContent": "Hi {firstName}, just following up on our recent conversation. If you have any questions about Trade Alliance Group services, feel free to contact us. We're here to help!",
+    "section": "contact"
+  },
+  {
+    "id": 4,
+    "templateName": "General Reminder",
+    "sendFrom": "0400000000",
+    "templateContent": "Hello {preferredName}, this is a reminder from Trade Alliance Group. Please contact us if you need any assistance. We appreciate your business!",
+    "section": "member"
+  }
+]

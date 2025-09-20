@@ -1,0 +1,18 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject NavigationManager Nav
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Trade Alliance Group - Homepage</PageTitle>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+
+        // Always redirect
+        Nav.NavigateTo("/Account/Login", forceLoad: true);
+
+    }
+}

@@ -1,0 +1,198 @@
+[
+  {
+    "id": 1,
+    "memberId": 1,
+    "content": "ACME Corporation quarterly review completed.\nExpanding into residential construction sector.\nRequesting bulk pricing for Makita tool packages.",
+    "timestamp": "2025-09-15T14:30:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 2,
+    "memberId": 1,
+    "content": "Safety compliance audit scheduled for October.\nAll licensing documentation updated and current.\nJohn Smith confirmed as primary contact going forward.",
+    "timestamp": "2025-09-08T11:20:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 3,
+    "memberId": 2,
+    "content": "Tech Solutions project management integration discussion.\nInterested in digital workflow optimization tools.\nSarah Johnson leading the implementation team.",
+    "timestamp": "2025-09-14T10:45:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 4,
+    "memberId": 2,
+    "content": "DeWalt preferred supplier agreement finalized.\nQuarterly tool maintenance schedule established.\nPrefer email communications for all formal requests.",
+    "timestamp": "2025-09-07T16:15:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 5,
+    "memberId": 3,
+    "content": "Global Ltd site inspection completed successfully.\nMilwaukee tool inventory meets all requirements.\nEarly morning deliveries (6am) work well for their schedule.",
+    "timestamp": "2025-09-13T07:30:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 6,
+    "memberId": 3,
+    "content": "Fleet vehicle specifications updated for Ford Rangers.\nBulk purchase agreement for camping equipment suppliers.\nMike Wilson continues as site supervisor liaison.",
+    "timestamp": "2025-09-06T15:45:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 7,
+    "memberId": 4,
+    "content": "Innovate Pty operations expansion approved.\nBosch tool training program implementation started.\nEmma Davis coordinating all operational improvements.",
+    "timestamp": "2025-09-12T13:20:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 8,
+    "memberId": 4,
+    "content": "Allergy-safe workplace protocols established.\nNut-free zones implemented in all meeting areas.\nHealth and wellness program integration successful.",
+    "timestamp": "2025-09-05T09:30:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 9,
+    "memberId": 5,
+    "content": "Enterprise Holdings operational review postponed.\nJames Brown currently on extended leave until Q1.\nEstimating services temporarily handled by backup team.",
+    "timestamp": "2025-09-11T14:15:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 10,
+    "memberId": 5,
+    "content": "Makita tool preferences documented for continuity.\nBackup estimating protocols established.\nGolf tournament sponsorship committed for next year.",
+    "timestamp": "2025-08-28T11:45:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 11,
+    "memberId": 6,
+    "content": "Nexus Group procurement processes streamlined.\nText messaging protocol established for urgent matters.\nLisa Chen managing all supplier relationships.",
+    "timestamp": "2025-09-10T12:30:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 12,
+    "memberId": 6,
+    "content": "DeWalt tool bulk procurement approved for new projects.\nFamily business considerations noted for scheduling.\nBaking supplies partnership opportunity identified.",
+    "timestamp": "2025-09-03T08:20:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 13,
+    "memberId": 7,
+    "content": "Summit Electrical remote site protocols established.\nMilwaukee tool inventory optimized for field work.\nWeekend on-call support system implemented.",
+    "timestamp": "2025-09-09T07:15:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 14,
+    "memberId": 7,
+    "content": "Mitsubishi Triton fleet specifications approved.\nElectrical equipment transport efficiency improved.\nRobert Taylor confirmed as primary electrical contact.",
+    "timestamp": "2025-09-02T16:40:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 15,
+    "memberId": 8,
+    "content": "VisionTech Systems partnership agreement signed.\nBosch tool demonstrations scheduled for Q4.\nSales targets exceeded expectations this quarter.",
+    "timestamp": "2025-09-16T10:20:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 16,
+    "memberId": 8,
+    "content": "Client entertainment protocols updated for wine preferences.\nMorning schedule protection policy implemented.\nYoga and wellness program integration approved.",
+    "timestamp": "2025-09-13T15:30:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 17,
+    "memberId": 9,
+    "content": "Pinnacle Construction project specifications reviewed.\nSpanish language documentation support arranged.\nMakita tool customization requirements finalized.",
+    "timestamp": "2025-09-08T13:45:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 18,
+    "memberId": 9,
+    "content": "Soccer league sponsorship opportunity discussed.\nToyota Hilux fleet modifications approved.\nWoodworking partnership potential identified.",
+    "timestamp": "2025-09-01T17:30:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 19,
+    "memberId": 10,
+    "content": "Quantum Marketing collaboration agreement finalized.\nZoom meeting preferences noted for all communications.\nPhotography services for product catalogs approved.",
+    "timestamp": "2025-09-07T14:25:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 20,
+    "memberId": 10,
+    "content": "Travel industry insights valuable for expansion planning.\nBosch tool product photography standards established.\nMorning meeting iced latte provisions approved.",
+    "timestamp": "2025-08-30T09:40:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 21,
+    "memberId": 11,
+    "content": "Fusion Logistics night shift operations review completed.\nDeWalt warehouse tool specifications updated.\nCricket team sponsorship approved for employee engagement.",
+    "timestamp": "2025-09-06T21:15:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 22,
+    "memberId": 11,
+    "content": "Holden Colorado loading specifications optimized.\nWarehouse efficiency improvements implemented.\nFamily-friendly shift scheduling policies established.",
+    "timestamp": "2025-08-29T22:45:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 23,
+    "memberId": 12,
+    "content": "Catalyst Services coordination protocols updated successfully.\nFriday meeting avoidance policy confirmed company-wide.\nGardening club connection established for team building.",
+    "timestamp": "2025-09-05T12:20:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 24,
+    "memberId": 12,
+    "content": "Makita tool service scheduling optimized for operations.\nHerbal tea preferences accommodated in all locations.\nChild-friendly workplace policies implementation started.",
+    "timestamp": "2025-08-28T14:50:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 25,
+    "memberId": 13,
+    "content": "Zenith Plumbing emergency response system established.\nMilwaukee tool maintenance contracts renewed annually.\nHome brewing team event approved for company culture.",
+    "timestamp": "2025-09-04T06:30:00Z",
+    "staffName": "Brett Crowther"
+  },
+  {
+    "id": 26,
+    "memberId": 13,
+    "content": "Weekend on-call availability confirmed for emergencies.\nNissan Navara equipment specifications approved.\nAfter-work social events planning includes beverage preferences.",
+    "timestamp": "2025-08-27T18:10:00Z",
+    "staffName": "Bec Lloyd"
+  },
+  {
+    "id": 27,
+    "memberId": 14,
+    "content": "Apex HR tool safety training program implementation.\nStationery supply preferences documented for efficiency.\nPilates wellness program approved for all employees.",
+    "timestamp": "2025-09-03T13:35:00Z",
+    "staffName": "Matthew Prendergast"
+  },
+  {
+    "id": 28,
+    "memberId": 14,
+    "content": "Podcast integration approved for break room entertainment.\nBosch tool safety certification tracking system updated.\nCappuccino machine upgrade improves workplace satisfaction.",
+    "timestamp": "2025-08-26T10:25:00Z",
+    "staffName": "Brett Crowther"
+  }
+]

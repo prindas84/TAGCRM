@@ -1,0 +1,51 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="page">
+    <AuthorizeView>
+        <Authorized>
+            <!-- Logged in: show sidebar + nav menu -->
+            <div class="sidebar">
+                <NavMenu />
+            </div>
+        </Authorized>
+    </AuthorizeView>
+
+    <main>
+        <!-- Top row: logo (only if not logged in) on left, menu items on right -->
+        <div class="top-row px-4 d-flex align-items-center top-bar">
+            <AuthorizeView>
+                <NotAuthorized>
+                    <img src="/images/TAG - Logo.png" alt="TAGCRM Logo" class="top-bar-logo" />
+                </NotAuthorized>
+            </AuthorizeView>
+
+            <div class="d-flex align-items-center ms-auto top-menu">
+                <AuthorizeView>
+                    <Authorized Context="auth">
+                        <a href="/Account/Manage" title="Account Profile" class="d-flex align-items-center top-menu-link">
+                            @auth.User.Identity?.Name
+                            <span class="bi bi-person-circle ms-2 top-menu-link"></span>
+                        </a>
+                        <a href="/notifications" title="Notifications" class="bi bi-bell-fill top-menu-link"></a>
+                    </Authorized>
+
+                    <NotAuthorized>
+                        <a href="/Account/Register" class="top-menu-link">Register</a>
+                        <a href="/Account/Login" class="top-menu-link">Login</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

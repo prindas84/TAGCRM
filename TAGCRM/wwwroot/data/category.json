@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "Builder"
+  },
+  {
+    "id": 2,
+    "name": "Electrician"
+  },
+  {
+    "id": 3,
+    "name": "Plumber"
+  },
+  {
+    "id": 4,
+    "name": "Carpenter"
+  },
+  {
+    "id": 5,
+    "name": "Roofer"
+  },
+  {
+    "id": 6,
+    "name": "Painter"
+  },
+  {
+    "id": 7,
+    "name": "Tiler"
+  },
+  {
+    "id": 8,
+    "name": "Landscaper"
+  },
+  {
+    "id": 9,
+    "name": "Concreter"
+  },
+  {
+    "id": 10,
+    "name": "HVAC Technician"
+  },
+  {
+    "id": 11,
+    "name": "Glazier"
+  },
+  {
+    "id": 12,
+    "name": "Flooring Installer"
+  },
+  {
+    "id": 13,
+    "name": "Demolition Contractor"
+  },
+  {
+    "id": 14,
+    "name": "Insulation Installer"
+  },
+  {
+    "id": 15,
+    "name": "Scaffolder"
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "id": 1,
+    "templateName": "Welcome New Contact",
+    "sendFrom": "welcome@tradealliancegroup.com.au",
+    "subject": "Welcome to Trade Alliance Group - {firstName}",
+    "templateContent": "<html><body><h2>Welcome to Trade Alliance Group!</h2><p>Dear {firstName},</p><p>Thank you for joining Trade Alliance Group. We're excited to have you as part of our community and look forward to supporting your business needs.</p><p>Our team is here to help you succeed. If you have any questions or need assistance, please don't hesitate to reach out to us.</p><p>Best regards,<br/>The Trade Alliance Group Team</p><p><small>This email was sent to {email}. If you have any concerns, please contact us.</small></p></body></html>",
+    "section": "contact"
+  },
+  {
+    "id": 2,
+    "templateName": "Membership Renewal Notice",
+    "sendFrom": "membership@tradealliancegroup.com.au", 
+    "subject": "Your Trade Alliance Group Membership Expires Soon",
+    "templateContent": "<html><body><h2>Membership Renewal Reminder</h2><p>Dear {preferredName},</p><p>This is a friendly reminder that your Trade Alliance Group membership will expire soon.</p><p>To continue enjoying all member benefits including:</p><ul><li>Exclusive industry updates</li><li>Member-only discounts</li><li>Priority support</li><li>Networking opportunities</li></ul><p>Please renew your membership by logging into your member portal or contacting our membership team.</p><p>Thank you for being a valued member!</p><p>Best regards,<br/>Trade Alliance Group Membership Team</p></body></html>",
+    "section": "member"
+  },
+  {
+    "id": 3,
+    "templateName": "Meeting Confirmation",
+    "sendFrom": "meetings@tradealliancegroup.com.au",
+    "subject": "Meeting Confirmation with {firstName}",
+    "templateContent": "<html><body><h2>Meeting Confirmation</h2><p>Dear {firstName},</p><p>This email confirms your upcoming meeting with Trade Alliance Group.</p><div style='background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #0066cc;'><strong>Contact Details:</strong><br/>Name: {firstName} {surname}<br/>Email: {email}<br/>Phone: {phone}<br/>Job Role: {jobRole}</div><p>Please let us know if you need to reschedule or have any questions before the meeting.</p><p>We look forward to meeting with you!</p><p>Best regards,<br/>Trade Alliance Group</p><p><small>Need to reschedule? Reply to this email or call us.</small></p></body></html>",
+    "section": "contact"
+  },
+  {
+    "id": 4,
+    "templateName": "Contact Information Update",
+    "sendFrom": "admin@tradealliancegroup.com.au",
+    "subject": "Contact Information Update - {preferredName}",
+    "templateContent": "<html><body><h2>Contact Information Update</h2><p>Dear {preferredName},</p><p>We have updated your contact information in our system:</p><div style='background-color: #f0f8ff; padding: 15px; margin: 20px 0; border-left: 4px solid #0066cc; border-radius: 4px;'><strong>Updated Contact Details:</strong><br/>Name: {firstName} {surname}<br/>Preferred Name: {preferredName}<br/>Email: {email}<br/>Phone: {phone}<br/>Job Role: {jobRole}<br/>Company: Trade Alliance Group Member</div><p>If any of this information is incorrect, please contact us immediately to make corrections.</p><p>Thank you for keeping your information up to date.</p><p>Best regards,<br/>Trade Alliance Group Administration Team</p><p><small>If you have any concerns about this update, please contact us at admin@tradealliancegroup.com.au</small></p></body></html>",
+    "section": "contact"
+  }
+]

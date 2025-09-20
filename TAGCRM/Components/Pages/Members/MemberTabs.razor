@@ -1,0 +1,26 @@
+@using Microsoft.AspNetCore.Components.Web
+
+<div class="tab-container">
+    <div class="tab-header">
+        <a href="/members/@MemberId" class="tab-button @(ActiveTab == "company" ? "active" : "")">
+            Company
+        </a>
+        <a href="/members/journey/@MemberId" class="tab-button @(ActiveTab == "journey" ? "active" : "")">
+            Journey
+        </a>
+        <a href="/members/reports/@MemberId" class="tab-button @(ActiveTab == "reports" ? "active" : "")">
+            Reports
+        </a>
+        <a href="/members/membership/@MemberId" class="tab-button @(ActiveTab == "membership" ? "active" : "")">
+            Membership
+        </a>
+        <a href="/members/history/@MemberId" class="tab-button @(ActiveTab == "history" ? "active" : "")">
+            History
+        </a>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int MemberId { get; set; }
+    [Parameter] public string ActiveTab { get; set; } = "company";
+}

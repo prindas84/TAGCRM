@@ -1,0 +1,1316 @@
+@page "/contacts/new"
+@page "/contacts/{contactId:int}"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@using TAGCRM.Models
+@using TAGCRM.Services
+
+@attribute [Authorize]
+@inject ContactService ContactService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Contact Details - Trade Alliance Group</PageTitle>
+
+<div class="container-fluid page-container-section mb-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="page-title">Contact Record</h1>
+            <div class="mobile-button-container">
+                <button type="button" class="btn btn-primary create-record-button mobile-button" @onclick="SaveAsync">
+                    @(IsNew ? "Create Contact" : "Update Contact")
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <button type="button" class="btn btn-primary create-record-button desktop-button" @onclick="SaveAsync">
+                @(IsNew ? "Create Contact" : "Update Contact")
+            </button>
+        </div>
+    </div>
+
+    <ContactTabs ContactId="@ContactId" ActiveTab="contact" />
+
+    @if (showSuccessAlert)
+    {
+        <div class="alert alert-success mt-3" role="alert">
+            @successMessage
+        </div>
+    }
+
+    @if (activeAlerts.Any())
+    {
+        <div class="alert alert-danger mt-3" role="alert">
+            <h5 class="alert-heading">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Active Member Alerts
+            </h5>
+            @foreach (var alert in activeAlerts)
+            {
+                <div class="mb-2">
+                    <strong>@GetAlertTypeName(alert.AlertType):</strong> @alert.Alert
+                    <small class="d-block text-muted">@alert.Start - @alert.End</small>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(contact?.BusinessName))
+            {
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="bi bi-building me-1"></i>@contact.BusinessName
+                    </small>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="row">
+        <!-- LEFT -->
+        <div class="col-md-5">
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#contactDetails" aria-expanded="true">
+                            Contact Details
+                        </button>
+                    </h2>
+                    <div id="contactDetails" class="accordion-collapse collapse show">
+                        <div class="accordion-body">
+                            @if (contact is not null)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Active</label>
+                                    <div class="form-check form-switch">
+                                        <InputCheckbox @bind-Value="contact.Active" class="form-check-input record-toggles"
+                                            id="activeToggle" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Email Subscribed</label>
+                                    <div class="form-check form-switch">
+                                        <InputCheckbox @bind-Value="contact.EmailSubscribed"
+                                            class="form-check-input record-toggles" id="emailSubscribedToggle" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">First Name</label>
+                                    <input class="form-control" @bind="contact.FirstName" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Surname</label>
+                                    <input class="form-control" @bind="contact.Surname" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Preferred Name</label>
+                                    <input class="form-control" @bind="contact.PreferredName" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Pronounced</label>
+                                    <input class="form-control" @bind="contact.Pronounced" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Company</label>
+                                    <div class="input-group">
+                                        <input class="form-control" placeholder="Search member…" @bind="CompanyQuery"
+                                            @bind:event="oninput" @onfocus="() => ShowCompanyList(true)"
+                                            @onblur="HideCompanyListDelayed" />
+
+                                        @if (!string.IsNullOrWhiteSpace(contact?.MemberId))
+                                        {
+                                            <a class="input-group-text link-icon" href="/members/@contact.MemberId"
+                                                target="_blank" title="View Member">
+                                                <i class="bi bi-building"></i>
+                                            </a>
+                                        }
+
+                                        @if (showCompanyList && companyResults.Any())
+                                        {
+                                            <ul class="list-group position-absolute w-100" style="z-index: 1000; top: 100%;">
+                                                @foreach (var m in companyResults)
+                                                {
+                                                    <li class="list-group-item list-group-item-action"
+                                                        @onclick="() => SelectCompany(m)">
+                                                        @m.BusinessName
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                    </div>
+
+                                    <div class="form-text">
+                                        @if (!string.IsNullOrWhiteSpace(CompanyQuery) && !companyResults.Any())
+                                        {
+                                            <span>No matches</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Phone</label>
+                                    <div class="input-group">
+                                        @if (contact is not null)
+                                        {
+                                            <input class="form-control" @bind="contact.Phone" />
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(contact?.Phone))
+                                        {
+                                            <a class="input-group-text link-icon" href="tel:@contact.Phone" title="Call">
+                                                <i class="bi bi-telephone-fill"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Email</label>
+                                    <div class="input-group">
+                                        @if (contact is not null)
+                                        {
+                                            <input type="email" class="form-control" @bind="contact.Email" />
+                                        }
+
+                                        @if (!string.IsNullOrWhiteSpace(contact?.Email))
+                                        {
+                                            <a class="input-group-text link-icon" href="mailto:@contact.Email"
+                                                title="Send Email">
+                                                <i class="bi bi-envelope-fill"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label field-label">Job Role</label>
+                                    @if (contact is not null)
+                                    {
+                                        <input class="form-control" @bind="contact.JobRole" />
+                                    }
+                                </div>
+
+                                <div class="d-flex gap-2 mt-4">
+                                    <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                        @(IsNew ? "Create Contact" : "Update Contact")
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted">Loading…</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="col-md-7">
+            <div class="accordion mb-3">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#personalInfo" aria-expanded="false">
+                            Personal Information
+                        </button>
+                    </h2>
+                    <div id="personalInfo" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            @if (contact is not null)
+                            {
+                                <div class="row">
+                                    <div class="col-12">
+                                        @if (ContactId > 0)
+                                        {
+                                            <!-- Avatar Section (Top) -->
+                                            <div class="mb-4">
+                                                <!-- Avatar Image -->
+                                                <div class="mb-3">
+                                                    @if (!string.IsNullOrWhiteSpace(contact.Avatar))
+                                                    {
+                                                        <img src="/avatars/@contact.Avatar" alt="Contact Avatar"
+                                                            class="img-fluid rounded-circle"
+                                                            style="width: 120px; height: 120px; object-fit: cover;" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white"
+                                                            style="width: 120px; height: 120px;">
+                                                            <i class="fas fa-user fa-3x"></i>
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                <!-- Upload and Delete Buttons -->
+                                                <div class="d-flex gap-2">
+                                                    <input type="file" id="avatarUpload" accept="image/*" style="display: none;"
+                                                        @onchange="HandleImageUpload" />
+                                                    <button type="button" class="btn btn-sm btn-outline-primary img-button"
+                                                        @onclick="TriggerFileUpload">
+                                                        Upload Image
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger img-button"
+                                                        @onclick="DeleteImage">
+                                                        Delete Image
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Personal Info Fields (Bottom) -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label field-label">Spouse</label>
+                                                    <input class="form-control" @bind="contact.Spouse" />
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label field-label">Children</label>
+                                                    <input class="form-control" @bind="contact.Children" />
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label field-label">Favorite Drink</label>
+                                                    <input class="form-control" @bind="contact.Drink" />
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label field-label">Hobbies</label>
+                                                    <input class="form-control" @bind="contact.Hobbies" />
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label field-label">Birthday</label>
+                                                    <input class="form-control" @bind="contact.Birthday"
+                                                        placeholder="DD/MM/YYYY" />
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label field-label">Power Tool Preference</label>
+                                                    <input class="form-control" @bind="contact.Tools" />
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label field-label">Vehicle Preference</label>
+                                                    <input class="form-control" @bind="contact.Vehicle" />
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label field-label">Other</label>
+                                                    <textarea class="form-control" @bind="contact.Other"
+                                                    rows="3"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 mt-4">
+                                    <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                        @(IsNew ? "Create Contact" : "Update Contact")
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!IsNew)
+            {
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#notes" aria-expanded="false">
+                                Notes
+                            </button>
+                        </h2>
+                        <div id="notes" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (contact is not null)
+                                {
+                                    <!-- Add Note Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <button type="button" class="btn btn-primary create-record-button record-buttons"
+                                            @onclick="ShowAddNoteModal">
+                                            + Add Note
+                                        </button>
+                                    </div>
+
+                                    <!-- Notes List -->
+                                    @if (notes.Any())
+                                    {
+                                        @foreach (var note in notes.OrderByDescending(n => n.Timestamp))
+                                        {
+                                            <div class="card mb-2">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <small class="text-muted">
+                                                            @note.Timestamp.ToString("dd/MM/yyyy HH:mm") - @note.StaffName
+                                                        </small>
+                                                        <div class="d-flex gap-1">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Edit note"
+                                                                @onclick="() => ShowEditNoteModal(note)">
+                                                                <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete note"
+                                                                @onclick="() => DeleteNoteAsync()">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="note-content" style="white-space: pre-line;">@note.Content</div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted text-center py-4">
+                                            No notes available.
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#feedback" aria-expanded="false">
+                                Feedback
+                            </button>
+                        </h2>
+                        <div id="feedback" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (contact is not null)
+                                {
+                                    <!-- Add Feedback Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <button type="button" class="btn btn-primary create-record-button record-buttons"
+                                            @onclick="ShowAddFeedbackModal">
+                                            + Add Feedback
+                                        </button>
+                                    </div>
+
+                                    <!-- Feedback Table -->
+                                    <div class="table-container">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Supplier</th>
+                                                    <th>Rating</th>
+                                                    <th>Created</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>TAG</td>
+                                                    <td>
+                                                        <div class="d-flex">
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star text-muted"></i>
+                                                        </div>
+                                                    </td>
+                                                    <td>7th August, 2025</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Edit feedback">
+                                                                <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete feedback">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>TAG</td>
+                                                    <td>
+                                                        <div class="d-flex">
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star text-muted"></i>
+                                                            <i class="bi bi-star text-muted"></i>
+                                                        </div>
+                                                    </td>
+                                                    <td>7th August, 2025</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Edit feedback">
+                                                                <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete feedback">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>TAG</td>
+                                                    <td>
+                                                        <div class="d-flex">
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star text-muted"></i>
+                                                            <i class="bi bi-star text-muted"></i>
+                                                            <i class="bi bi-star text-muted"></i>
+                                                        </div>
+                                                    </td>
+                                                    <td>7th August, 2025</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Edit feedback">
+                                                                <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete feedback">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>TAG</td>
+                                                    <td>
+                                                        <div class="d-flex">
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                            <i class="bi bi-star-fill text-warning"></i>
+                                                        </div>
+                                                    </td>
+                                                    <td>7th August, 2025</td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Edit feedback">
+                                                                <i class="bi bi-pencil-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete feedback">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#referrals" aria-expanded="false">
+                                Referrals
+                            </button>
+                        </h2>
+                        <div id="referrals" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (contact is not null)
+                                {
+                                    <!-- Add Referral Button -->
+                                    <div class="d-flex justify-content-center mb-3">
+                                        <button type="button" class="btn btn-primary create-record-button record-buttons"
+                                            @onclick="ShowAddReferralModal">
+                                            + Add Referral
+                                        </button>
+                                    </div>
+
+                                    <!-- Referrals Table -->
+                                    <div class="table-container">
+                                        <table class="table table-bordered table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Referral Date</th>
+                                                    <th>Status</th>
+                                                    <th class="text-center">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>TAG</td>
+                                                    <td>7th August, 2025</td>
+                                                    <td><span class="badge bg-success">Open</span></td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View referral">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete referral">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>TAG</td>
+                                                    <td>7th August, 2025</td>
+                                                    <td><span class="badge bg-primary">Completed</span></td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View referral">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete referral">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>TAG</td>
+                                                    <td>7th August, 2025</td>
+                                                    <td><span class="badge bg-primary">Completed</span></td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View referral">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete referral">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>TAG</td>
+                                                    <td>7th August, 2025</td>
+                                                    <td><span class="badge bg-secondary">Archived</span></td>
+                                                    <td>
+                                                        <div class="d-flex gap-1 justify-content-center">
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="View referral">
+                                                                <i class="bi bi-eye-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-no-focus p-1"
+                                                                style="width: 28px; height: 28px;" title="Delete referral">
+                                                                <i class="bi bi-trash-fill" style="font-size: 12px;"></i>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#email" aria-expanded="false">
+                                Email
+                            </button>
+                        </h2>
+                        <div id="email" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (contact is not null)
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label field-label">Select Template</label>
+                                        <select class="form-select" @onchange="OnEmailTemplateChanged">
+                                            <option value="">Choose a template...</option>
+                                            @foreach (var template in emailTemplates.Where(t => t.Section == "contact"))
+                                            {
+                                                <option value="@template.Id">@template.TemplateName</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label field-label">Send From</label>
+                                        <input class="form-control" @bind="emailFrom" readonly
+                                            style="background-color: #f8f9fa;" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label field-label">Subject</label>
+                                        <input class="form-control" @bind="emailSubject" readonly
+                                            style="background-color: #f8f9fa;" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label field-label">Email Content</label>
+                                        <textarea class="form-control" @bind="emailContent" rows="8"
+                                    style="background-color: #f8f9fa; border: 1px solid #dee2e6; resize: vertical;"
+                                    placeholder="Select a template to populate email content..."></textarea>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end gap-2 mt-4">
+                                        <button type="button" class="btn btn-primary create-record-button"
+                                            @onclick="SendEmailAsync" disabled="@(string.IsNullOrWhiteSpace(emailContent))">
+                                            Send Email
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#sms" aria-expanded="false">
+                                SMS
+                            </button>
+                        </h2>
+                        <div id="sms" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (contact is not null)
+                                {
+                                    <div class="mb-3">
+                                        <label class="form-label field-label">Select Template</label>
+                                        <select class="form-select" @onchange="OnSmsTemplateChanged">
+                                            <option value="">Choose a template...</option>
+                                            @foreach (var template in smsTemplates.Where(t => t.Section == "contact"))
+                                            {
+                                                <option value="@template.Id">@template.TemplateName</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label field-label">Send From</label>
+                                        <input class="form-control" @bind="smsFrom" readonly
+                                            style="background-color: #f8f9fa;" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label field-label">Message Content</label>
+                                        <textarea class="form-control" @bind="smsContent" rows="6"
+                                    style="background-color: #f8f9fa; border: 1px solid #dee2e6; resize: vertical;"
+                                    placeholder="Select a template to populate message content..."></textarea>
+                                        <div class="form-text">
+                                            Character count: @smsContent.Length/160
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end gap-2 mt-4">
+                                        <button type="button" class="btn btn-primary create-record-button"
+                                            @onclick="SendSmsAsync" disabled="@(string.IsNullOrWhiteSpace(smsContent))">
+                                            Send SMS
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion mb-3">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#permissions" aria-expanded="false">
+                                Permissions
+                            </button>
+                        </h2>
+                        <div id="permissions" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                @if (contact is not null)
+                                {
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mt-3">
+                                                <InputCheckbox @bind-Value="contact.PortalAccess" class="form-check-input"
+                                                    id="portalAccessCheck" />
+                                                <label class="form-check-label checkbox-label" for="portalAccessCheck">
+                                                    Member Portal Access
+                                                </label>
+                                            </div>
+
+                                            <div class="form-check mt-3">
+                                                <InputCheckbox @bind-Value="contact.ContactsPermissions"
+                                                    class="form-check-input" id="contactsPermissionsCheck" />
+                                                <label class="form-check-label checkbox-label" for="contactsPermissionsCheck">
+                                                    Manage Contacts & Permissions
+                                                </label>
+                                            </div>
+
+                                            <div class="form-check mt-3">
+                                                <InputCheckbox @bind-Value="contact.InvoiceHistory" class="form-check-input"
+                                                    id="invoiceHistoryCheck" />
+                                                <label class="form-check-label checkbox-label" for="invoiceHistoryCheck">
+                                                    View Invoice History Access
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="form-check mt-3">
+                                                <InputCheckbox @bind-Value="contact.BusinessDetails" class="form-check-input"
+                                                    id="businessDetailsCheck" />
+                                                <label class="form-check-label checkbox-label" for="businessDetailsCheck">
+                                                    Manage Business Details
+                                                </label>
+                                            </div>
+
+                                            <div class="form-check mt-3">
+                                                <InputCheckbox @bind-Value="contact.MemberSubscription" class="form-check-input"
+                                                    id="memberSubscriptionCheck" />
+                                                <label class="form-check-label checkbox-label" for="memberSubscriptionCheck">
+                                                    Manage Membership & Subscription
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end gap-2 mt-4">
+                                        <button type="button" class="btn btn-primary create-record-button" @onclick="SaveAsync">
+                                            Update Contact
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div class="modal fade" id="noteModal" tabindex="-1" aria-labelledby="noteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="noteModalLabel">@(editingNoteId > 0 ? "Edit Note" : "Add Note")</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <textarea class="form-control" @bind="modalNoteContent" rows="6"
+                            placeholder="Enter the note content here..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn modal-confirm" @onclick="SaveModalNoteAsync"
+                        data-bs-dismiss="modal">
+                        @(editingNoteId > 0 ? "Update Note" : "Add Note")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackModalLabel">Add Feedback</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label field-label">Supplier</label>
+                        <input class="form-control" @bind="feedbackSupplier" placeholder="Supplier" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label field-label">Supplier Rating</label>
+                        <div class="d-flex gap-1 mt-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                int starValue = i; // Capture for closure
+                                <i class="@GetStarClass(starValue)" style="font-size: 20px; cursor: pointer;"
+                                    @onclick="() => SetRating(starValue)"></i>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label field-label">Feedback</label>
+                        <textarea class="form-control" @bind="feedbackContent" rows="6"
+                            placeholder="Enter the feedback here..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn modal-confirm" @onclick="SaveFeedbackAsync"
+                        data-bs-dismiss="modal">
+                        Add Feedback
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Modal -->
+    <div class="modal fade" id="referralModal" tabindex="-1" aria-labelledby="referralModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="referralModalLabel">Add Referral</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label field-label">Business Name</label>
+                        <input class="form-control" @bind="referralBusinessName" placeholder="Business Name" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label field-label">Contact Name</label>
+                        <input class="form-control" @bind="referralContactName" placeholder="Contact Name" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label field-label">Phone</label>
+                        <input class="form-control" @bind="referralPhone" placeholder="Phone" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label field-label">Mobile</label>
+                        <input class="form-control" @bind="referralMobile" placeholder="Mobile" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label field-label">Email Address</label>
+                        <input type="email" class="form-control" @bind="referralEmail" placeholder="Email Address" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn modal-confirm" @onclick="SaveReferralAsync"
+                        data-bs-dismiss="modal">
+                        Add Referral
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public int ContactId { get; set; }
+    private bool IsNew => ContactId <= 0 || contact.Id <= 0;
+    private Contact contact = new();
+    private bool showSuccessAlert = false;
+    private string successMessage = string.Empty;
+    private System.Threading.Timer? hideTimer;
+
+    // Company/member autocomplete functionality
+    private List<Member> allMembers = new();
+    private string companyQuery = string.Empty;
+    private List<Member> companyResults = new();
+    private bool showCompanyList = false;
+
+    // SMS template selection and content
+    private List<SmsTemplate> smsTemplates = new();
+    private SmsTemplate? selectedSmsTemplate;
+    private string smsContent = string.Empty;
+    private string smsFrom = string.Empty;
+
+    // Email template selection and content
+    private List<EmailTemplate> emailTemplates = new();
+    private EmailTemplate? selectedEmailTemplate;
+    private string emailContent = string.Empty;
+    private string emailFrom = string.Empty;
+    private string emailSubject = string.Empty;
+
+    // Contact notes display
+    private List<ContactNote> notes = new();
+
+    // Feedback modal form fields
+    private string feedbackSupplier = string.Empty;
+    private int feedbackRating = 0;
+    private string feedbackContent = string.Empty;
+
+    // Referral modal form fields
+    private string referralBusinessName = string.Empty;
+    private string referralContactName = string.Empty;
+    private string referralPhone = string.Empty;
+    private string referralMobile = string.Empty;
+    private string referralEmail = string.Empty;
+
+    // Alert fields
+    private List<MemberAlert> activeAlerts = new();
+    private List<AlertType> alertTypes = new();
+
+
+    // Initialize page data based on contact ID parameter
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ContactId > 0)
+        {
+            contact = await ContactService.GetContactByIdAsync(ContactId)
+            ?? new Contact { Id = ContactId, Active = true };
+        }
+        else
+        {
+            contact = new Contact { Active = true };
+        }
+
+        allMembers = await ContactService.GetAllMembersAsync();
+        smsTemplates = await ContactService.GetSmsTemplatesAsync();
+        emailTemplates = await ContactService.GetEmailTemplatesAsync();
+        companyQuery = contact.BusinessName ?? string.Empty;
+        FilterCompanies(companyQuery);
+        notes = await ContactService.GetContactNotesAsync(ContactId);
+        alertTypes = await ContactService.GetAlertTypesAsync();
+        await CheckContactMemberAlerts();
+    }
+
+    // Main save button handler (UI simulation only)
+    private async Task SaveAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Contact Updated";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Display success alert with auto-hide timer and page refresh
+    private async Task ShowAlertAndScrollAsync()
+    {
+        showSuccessAlert = true;
+
+        hideTimer?.Dispose();
+        hideTimer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(() =>
+    {
+            showSuccessAlert = false;
+            StateHasChanged();
+        });
+
+            // Refresh the page
+            Nav.NavigateTo(Nav.Uri, forceLoad: true);
+
+        }, null, 2000, System.Threading.Timeout.Infinite);
+
+        StateHasChanged();
+
+        await Task.CompletedTask;
+    }
+
+    // Show or hide company dropdown list
+    private void ShowCompanyList(bool show) => showCompanyList = show;
+
+    // Hide company dropdown with delay to allow selection
+    private async void HideCompanyListDelayed(FocusEventArgs _)
+    {
+        await Task.Delay(150);
+        showCompanyList = false;
+        StateHasChanged();
+    }
+
+    // Filter company results based on search query
+    private void FilterCompanies(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            companyResults = allMembers.Take(8).ToList();
+        }
+        else
+        {
+            var q = query.Trim().ToLowerInvariant();
+            companyResults = allMembers
+            .Where(m => !string.IsNullOrWhiteSpace(m.BusinessName) && m.BusinessName.ToLower().Contains(q))
+            .OrderBy(m => m.BusinessName)
+            .Take(8)
+            .ToList();
+        }
+    }
+
+    // Company search query property with filtering
+    private string CompanyQuery
+    {
+        get => companyQuery;
+        set
+        {
+            companyQuery = value;
+            showCompanyList = true;
+            FilterCompanies(companyQuery);
+        }
+    }
+
+    // Select company from dropdown and update contact
+    private void SelectCompany(Member m)
+    {
+        contact.MemberId = m.Id.ToString();
+        contact.BusinessName = m.BusinessName ?? string.Empty;
+        companyQuery = contact.BusinessName;
+        showCompanyList = false;
+    }
+
+    // Generate display name from first and last name
+    private static string ComputeName(Contact c)
+    {
+        var first = (c.FirstName ?? "").Trim();
+        var last = (c.Surname ?? "").Trim();
+        return string.Join(" ", new[] { first, last }.Where(s => !string.IsNullOrEmpty(s)));
+    }
+
+    // Trigger file upload dialog for avatar
+    private async Task TriggerFileUpload()
+    {
+        await JS.InvokeVoidAsync("document.getElementById", "avatarUpload");
+        await JS.InvokeVoidAsync("eval", "document.getElementById('avatarUpload').click()");
+    }
+
+    // Handle avatar image upload (UI simulation only)
+    private async Task HandleImageUpload(ChangeEventArgs e)
+    {
+        // Check if a file was actually selected
+        var input = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(input))
+        {
+            await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+            successMessage = "Image uploaded";
+            await ShowAlertAndScrollAsync();
+        }
+    }
+
+    // Delete avatar image (UI simulation only)
+    private async Task DeleteImage()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Image deleted";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Handle email template selection and populate form fields
+    private void OnEmailTemplateChanged(ChangeEventArgs e)
+    {
+        var templateId = e.Value?.ToString();
+        if (int.TryParse(templateId, out int id))
+        {
+            selectedEmailTemplate = emailTemplates.FirstOrDefault(t => t.Id == id);
+            if (selectedEmailTemplate != null)
+            {
+                emailFrom = selectedEmailTemplate.SendFrom;
+                emailSubject = ReplacePlaceholders(selectedEmailTemplate.Subject);
+                emailContent = ReplacePlaceholders(selectedEmailTemplate.TemplateContent);
+            }
+        }
+        else
+        {
+            selectedEmailTemplate = null;
+            emailFrom = string.Empty;
+            emailSubject = string.Empty;
+            emailContent = string.Empty;
+        }
+    }
+
+    // Send email functionality (UI simulation only)
+    private async Task SendEmailAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Email Sent";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Handle SMS template selection and populate form fields
+    private void OnSmsTemplateChanged(ChangeEventArgs e)
+    {
+        var templateId = e.Value?.ToString();
+        if (int.TryParse(templateId, out int id))
+        {
+            selectedSmsTemplate = smsTemplates.FirstOrDefault(t => t.Id == id);
+            if (selectedSmsTemplate != null)
+            {
+                smsFrom = selectedSmsTemplate.SendFrom;
+                smsContent = ReplacePlaceholders(selectedSmsTemplate.TemplateContent);
+            }
+        }
+        else
+        {
+            selectedSmsTemplate = null;
+            smsFrom = string.Empty;
+            smsContent = string.Empty;
+        }
+    }
+
+    // Send SMS functionality (UI simulation only)
+    private async Task SendSmsAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "SMS Sent";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Replace template placeholders with contact data
+    private string ReplacePlaceholders(string template)
+    {
+        return template
+        .Replace("{firstName}", contact.FirstName)
+        .Replace("{surname}", contact.Surname)
+        .Replace("{preferredName}", !string.IsNullOrEmpty(contact.PreferredName) ? contact.PreferredName : contact.FirstName)
+        .Replace("{email}", contact.Email)
+        .Replace("{phone}", contact.Phone)
+        .Replace("{jobRole}", contact.JobRole);
+    }
+
+    // Clean up timer resources
+    public void Dispose()
+    {
+        hideTimer?.Dispose();
+    }
+
+    // Note modal state management
+    private string modalNoteContent = string.Empty;
+    private int editingNoteId = 0;
+
+    // Display add note modal dialog
+    private async Task ShowAddNoteModal()
+    {
+        editingNoteId = 0;
+        modalNoteContent = string.Empty;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('noteModal')).show()");
+    }
+
+    // Display edit note modal dialog with existing note content
+    private async Task ShowEditNoteModal(ContactNote note)
+    {
+        editingNoteId = note.Id;
+        modalNoteContent = note.Content;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('noteModal')).show()");
+    }
+
+    // Save note from modal (UI simulation only)
+    private async Task SaveModalNoteAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Note updated successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Delete note functionality (UI simulation only)
+    private async Task DeleteNoteAsync()
+    {
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Note deleted successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Display add feedback modal dialog
+    private async Task ShowAddFeedbackModal()
+    {
+        feedbackSupplier = string.Empty;
+        feedbackRating = 0;
+        feedbackContent = string.Empty;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('feedbackModal')).show()");
+    }
+
+    // Set star rating for feedback
+    private void SetRating(int rating)
+    {
+        feedbackRating = rating;
+    }
+
+    // Get CSS class for star rating display
+    private string GetStarClass(int starNumber)
+    {
+        return starNumber <= feedbackRating
+        ? "bi bi-star-fill text-warning"
+        : "bi bi-star text-muted";
+    }
+
+    // Save feedback from modal (UI simulation only)
+    private async Task SaveFeedbackAsync()
+    {
+        // Placeholder for future functionality
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Feedback added successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    // Display add referral modal dialog
+    private async Task ShowAddReferralModal()
+    {
+        referralBusinessName = string.Empty;
+        referralContactName = string.Empty;
+        referralPhone = string.Empty;
+        referralMobile = string.Empty;
+        referralEmail = string.Empty;
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('referralModal')).show()");
+    }
+
+    // Save referral from modal (UI simulation only)
+    private async Task SaveReferralAsync()
+    {
+        // Placeholder for future functionality
+        await JS.InvokeVoidAsync("window.scrollTo", 0, 0);
+        successMessage = "Referral added successfully";
+        await ShowAlertAndScrollAsync();
+    }
+
+    private async Task CheckContactMemberAlerts()
+    {
+        activeAlerts = new List<MemberAlert>();
+
+        if (!string.IsNullOrWhiteSpace(contact?.MemberId) && int.TryParse(contact.MemberId, out int memberId))
+        {
+            var memberAlerts = await ContactService.GetMemberAlertsAsync(memberId);
+
+            var today = DateTime.Today;
+            activeAlerts = memberAlerts.Where(alert =>
+            {
+                var startDate = DateTime.TryParse(alert.Start, out var start) ? start.Date : DateTime.MinValue;
+                var endDate = DateTime.TryParse(alert.End, out var end) ? end.Date : DateTime.MaxValue;
+
+                return today >= startDate && today <= endDate;
+            }).ToList();
+        }
+    }
+
+    private string GetAlertTypeName(int alertTypeId)
+    {
+        var alertType = alertTypes.FirstOrDefault(at => at.Id == alertTypeId);
+        return alertType?.Name ?? "Unknown";
+    }
+
+}

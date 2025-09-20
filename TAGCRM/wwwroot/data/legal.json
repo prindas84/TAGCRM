@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "Company"
+  },
+  {
+    "id": 2,
+    "name": "Sole Trader"
+  },
+  {
+    "id": 3,
+    "name": "Trust"
+  }
+]

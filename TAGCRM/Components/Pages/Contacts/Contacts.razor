@@ -1,0 +1,195 @@
+@page "/contacts"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Authorization
+@using TAGCRM.Models
+@using TAGCRM.Services
+@attribute [Authorize]
+@inject ContactService ContactService
+@inject NavigationManager Navigation
+
+<PageTitle>Contacts - Trade Alliance Group</PageTitle>
+
+<div class="container-fluid page-container-section mb-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1 class="page-title">Contacts</h1>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" class="form-control search-bar-input" 
+                       placeholder="Search Name, Phone, Email, Company"
+                       @bind="searchTerm" @bind:event="oninput" @onkeyup="OnSearchKeyUp">
+                <button class="input-group-text search-bar-logo" @onclick="PerformSearch">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <div class="">
+                <button @onclick='() => Navigation.NavigateTo("/contacts/new")' class="btn btn-primary create-record-button mobile-button">+ New Contact</button>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <button @onclick='() => Navigation.NavigateTo("/contacts/new")' class="btn btn-primary create-record-button desktop-button">+ New Contact</button>
+        </div>
+    </div>
+    
+    @if (contacts.Any())
+    {
+        <div class="table-container">
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 10%;" class="text-center">Active</th>
+                        <th style="width: 20%; white-space: nowrap;">Name</th>
+                        <th style="width: 15%; white-space: nowrap;">Phone</th>
+                        <th style="width: 25%; white-space: nowrap;">Email</th>
+                        <th style="width: 30%; white-space: nowrap;">Company</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var contact in contacts)
+                    {
+                        <tr style="cursor: pointer;" @onclick='() => Navigation.NavigateTo($"/contacts/{contact.Id}")'>
+                            <td class="text-center">
+                                @if (contact.Active)
+                                {
+                                    <i class="bi bi-circle-fill text-success"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-circle-fill text-danger"></i>
+                                }
+                            </td>
+                            <td class="text-dark">@FullName(contact)</td>
+                            <td class="text-dark">@contact.Phone</td>
+                            <td class="text-dark">@contact.Email</td>
+                            <td class="text-dark">@contact.BusinessName</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        @if (totalPages > 1)
+        {
+            <div class="row mt-4 mb-4">
+                <div class="col-12 d-flex justify-content-center">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                @if (currentPage == 1)
+                                {
+                                    <span class="page-link">«</span>
+                                }
+                                else
+                                {
+                                    <button type="button" class="page-link" @onclick='() => NavigateToPage(currentPage - 1)'>«</button>
+                                }
+                            </li>
+                            
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                int pageNum = i;
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    @if (i == currentPage)
+                                    {
+                                        <span class="page-link">@i</span>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="page-link" @onclick='() => NavigateToPage(pageNum)'>@i</button>
+                                    }
+                                </li>
+                            }
+                            
+                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                @if (currentPage == totalPages)
+                                {
+                                    <span class="page-link">»</span>
+                                }
+                                else
+                                {
+                                    <button type="button" class="page-link" @onclick='() => NavigateToPage(currentPage + 1)'>»</button>
+                                }
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        }
+    }
+    else if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No contacts found.
+        </div>
+    }
+</div>
+
+@code {
+    private List<Contact> contacts = new();
+    private bool isLoading = true;
+    private string searchTerm = "";
+    
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalRecords = 0;
+    private int totalPages => (int)Math.Ceiling((double)totalRecords / pageSize);
+
+    private static string FullName(Contact c)
+    {
+        var first = (c.FirstName ?? string.Empty).Trim();
+        var last  = (c.Surname ?? string.Empty).Trim();
+        var full  = string.Join(" ", new[] { first, last }.Where(s => !string.IsNullOrEmpty(s)));
+        return string.IsNullOrEmpty(full) ? (c.Name ?? string.Empty) : full;
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    
+    private async void PerformSearch()
+    {
+        currentPage = 1;
+        await LoadData();
+        StateHasChanged();
+    }
+    
+    private void OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            PerformSearch();
+        }
+    }
+    
+    private async void NavigateToPage(int page)
+    {
+        currentPage = page;
+        await LoadData();
+        StateHasChanged();
+    }
+    
+    private async Task LoadData()
+    {
+        isLoading = true;
+        
+        var result = await ContactService.GetContactsAsync(currentPage, pageSize, searchTerm);
+        contacts = result.Data;
+        totalRecords = result.TotalRecords;
+        
+        isLoading = false;
+    }
+}
