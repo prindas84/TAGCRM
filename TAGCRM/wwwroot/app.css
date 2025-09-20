@@ -369,11 +369,16 @@ input.form-control:focus {
 
 .tab-container {
     margin-bottom: 20px;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .tab-header {
     display: flex;
     border-bottom: 2px solid #e0e0e0;
+    min-width: fit-content;
+    width: 100%;
 }
 
 .tab-button {
@@ -388,6 +393,30 @@ input.form-control:focus {
     transition: all 0.3s ease;
     text-decoration: none;
     display: inline-block;
+    white-space: nowrap;
+    flex-shrink: 0; /* Prevent tabs from shrinking */
+    min-width: max-content; /* Ensure full text is visible */
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .tab-button {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .tab-container {
+        margin-left: -15px;
+        margin-right: -15px;
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .tab-button {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
 }
 
 .tab-button:hover {
@@ -400,4 +429,111 @@ input.form-control:focus {
     color: #b22a1f;
     border-bottom-color: #b22a1f;
     background-color: transparent;
+}
+
+/* Contacts section responsive styling */
+.contacts-list-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 8px;
+    border-bottom: 1px solid #e9ecef;
+    min-width: 0; /* Allow flex items to shrink */
+}
+
+.contact-avatar-container {
+    flex-shrink: 0;
+    margin-right: 12px;
+}
+
+.contact-details-container {
+    flex: 1;
+    min-width: 0; /* Allows text to truncate */
+    margin-right: 12px;
+}
+
+.contact-name {
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contact-role {
+    color: #6c757d;
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contact-actions-container {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.contact-action-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .contact-avatar-container img,
+    .contact-avatar-container div {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .contact-avatar-container {
+        margin-right: 10px;
+    }
+    
+    .contact-actions-container {
+        gap: 6px;
+    }
+    
+    .contact-action-link {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .contact-role {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .contact-avatar-container img,
+    .contact-avatar-container div {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    
+    .contact-avatar-container {
+        margin-right: 8px;
+    }
+    
+    .contact-actions-container {
+        gap: 4px;
+    }
+    
+    .contact-action-link {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .contact-action-link i {
+        font-size: 0.75rem;
+    }
+    
+    .badge {
+        font-size: 0.65rem !important;
+        padding: 0.25em 0.4em !important;
+    }
 }

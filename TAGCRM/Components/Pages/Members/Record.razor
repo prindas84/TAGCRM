@@ -448,9 +448,9 @@
                                     {
                                         @foreach (var contact in memberContacts.OrderBy(c => c.FirstName).ThenBy(c => c.Surname))
                                         {
-                                            <div class="d-flex align-items-center mb-3 p-2" style="border-bottom: 1px solid #e9ecef;">
+                                            <div class="contacts-list-item">
                                                 <!-- Avatar -->
-                                                <div class="me-3">
+                                                <div class="contact-avatar-container">
                                                     @if (!string.IsNullOrWhiteSpace(contact.Avatar))
                                                     {
                                                         <img src="/avatars/@contact.Avatar" alt="@contact.FirstName @contact.Surname"
@@ -466,11 +466,11 @@
                                                 </div>
 
                                                 <!-- Contact Details -->
-                                                <div class="flex-grow-1">
-                                                    <div class="fw-bold">
+                                                <div class="contact-details-container">
+                                                    <div class="contact-name">
                                                         @GetContactDisplayName(contact)
                                                     </div>
-                                                    <div class="text-muted small">
+                                                    <div class="contact-role">
                                                         @contact.JobRole
                                                         @if (member.PrimaryContactId == contact.Id)
                                                         {
@@ -480,22 +480,22 @@
                                                 </div>
 
                                                 <!-- Action Icons -->
-                                                <div class="d-flex gap-2">
+                                                <div class="contact-actions-container">
                                                     @if (!string.IsNullOrWhiteSpace(contact.Phone))
                                                     {
-                                                        <a href="tel:@contact.Phone" class="input-group-text link-icon"
+                                                        <a href="tel:@contact.Phone" class="input-group-text link-icon contact-action-link"
                                                             title="Call @contact.FirstName">
                                                             <i class="bi bi-telephone-fill"></i>
                                                         </a>
                                                     }
                                                     @if (!string.IsNullOrWhiteSpace(contact.Email))
                                                     {
-                                                        <a href="mailto:@contact.Email" class="input-group-text link-icon"
+                                                        <a href="mailto:@contact.Email" class="input-group-text link-icon contact-action-link"
                                                             title="Email @contact.FirstName">
                                                             <i class="bi bi-envelope-fill"></i>
                                                         </a>
                                                     }
-                                                    <a href="/contacts/@contact.Id" class="input-group-text link-icon" target="_blank"
+                                                    <a href="/contacts/@contact.Id" class="input-group-text link-icon contact-action-link" target="_blank"
                                                         title="View Contact">
                                                         <i class="bi bi-person-fill"></i>
                                                     </a>
